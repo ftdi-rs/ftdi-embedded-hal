@@ -2,8 +2,21 @@
 name = "ftd2xx-embedded-hal"
 version = "0.1.0"
 authors = ["Alex M. <alexmgit@protonmail.com>"]
+description = "embedded-hal implementation for FTDI USB devices."
+keywords = ["ftdi", "usb", "io", "hal"]
+categories = ["embedded"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "MIT"
+repository = "https://github.com/newAM/ftd2xx-embedded-hal/"
+documentation = "https://docs.rs/ftd2xx-embedded-hal"
+readme = "README.md"
 
 [dependencies]
+embedded-hal = "0.2.3"
+libftd2xx = "~0.16.1"
+
+[dev-dependencies]
+version-sync = "0.9.1"
+
+[badges]
+maintenance = { status = "experimental" }
