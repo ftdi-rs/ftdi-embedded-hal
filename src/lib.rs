@@ -27,7 +27,7 @@
 //! [libftd2xx crate]: https://github.com/newAM/libftd2xx-rs/
 //! [libftd2xx]: https://github.com/newAM/libftd2xx-rs
 //! [newAM/eeprom25aa02e48-rs]: https://github.com/newAM/eeprom25aa02e48-rs/blob/master/examples/ftdi.rs
-#![doc(html_root_url = "https://docs.rs/ftd2xx-embedded-hal/0.1.0")]
+#![doc(html_root_url = "https://docs.rs/ftd2xx-embedded-hal/0.2.0")]
 #![deny(unsafe_code, missing_docs)]
 
 pub use embedded_hal;
@@ -47,10 +47,6 @@ pub struct Ft232hHal {
     mtx: Mutex<RefCell<Ft232h>>,
     value: Mutex<u8>,
 }
-
-// TODO
-// What about a builder pattern?
-// Build::new().usb_transfer_size().serial_number()....
 
 impl Ft232hHal {
     /// Create a new FT232H structure.
@@ -239,6 +235,25 @@ impl<'a> embedded_hal::blocking::spi::Transfer<u8> for Spi<'a> {
         let mut ft = lock.borrow_mut();
         ft.clock_data(self.clk, words)?;
         Ok(words)
+    }
+}
+
+impl<'a> embedded_hal::spi::FullDuplex<u8> for Spi<'a> {
+    type Error = TimeoutError;
+
+    fn read(&mut self) -> nb::Result<u8, Self::Error> {
+        let lock = self.mtx.lock().unwrap();
+        let mut ft = lock.borrow_mut();
+        let mut buf: [u8; 1] = [0];
+        ft.clock_data(self.clk, &mut buf)?;
+        Ok(buf[0])
+    }
+
+    fn send(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
+        let lock = self.mtx.lock().unwrap();
+        let mut ft = lock.borrow_mut();
+        ft.clock_data_out(self.clk_out, &[byte])?;
+        Ok(())
     }
 }
 
