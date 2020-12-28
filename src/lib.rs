@@ -4,7 +4,7 @@
 //! This enables development of embedded devices drivers without the use of a
 //! microcontroller.
 //! The FTDI 2xx devices interface with your PC via USB.
-//! They have a multi-protocol snchronous serial engine which allows them to
+//! They have a multi-protocol synchronous serial engine which allows them to
 //! interface with most UART, SPI, and I2C embedded devices.
 //!
 //! # Setup
