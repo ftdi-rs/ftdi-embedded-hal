@@ -12,12 +12,12 @@ documentation = "https://docs.rs/ftd2xx-embedded-hal"
 readme = "README.md"
 
 [dependencies]
-nb = "1.0.0"
-embedded-hal = "0.2.4"
+nb = "^1"
+embedded-hal = "~0.2.4"
 libftd2xx = "~0.24.0"
 
 [dev-dependencies]
-version-sync = "0.9.1"
+version-sync = "~0.9.2"
 
 [badges]
 maintenance = { status = "experimental" }

@@ -31,12 +31,12 @@
 #![deny(unsafe_code, missing_docs)]
 
 pub use embedded_hal;
-
 pub use libftd2xx;
 
 use embedded_hal::spi::Polarity;
 use libftd2xx::{
-    ClockData, ClockDataOut, DeviceTypeError, Ft232h, Ftdi, FtdiMpsse, MpsseSettings, TimeoutError,
+    ClockData, ClockDataOut, DeviceTypeError, Ft232h, Ftdi, FtdiCommon, FtdiMpsse, MpsseCmdBuilder,
+    MpsseSettings, TimeoutError,
 };
 use std::cell::RefCell;
 use std::convert::TryFrom;
@@ -179,7 +179,11 @@ impl<'a> Spi<'a> {
         settings.mask = 0x1B;
         ft.initialize_mpsse(&settings)?;
         ft.set_clock(100_000)?;
-        ft.set_gpio_lower(0x18, 0x1B)?;
+        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+            .set_gpio_lower(0x18, 0x1B)
+            .send_immediate();
+        ft.write_all(cmd.as_slice())?;
+
         Ok(Spi {
             mtx,
             clk: ClockData::MsbPosIn,
@@ -205,35 +209,42 @@ impl<'a> Spi<'a> {
     ///
     /// [SPI mode]: https://en.wikipedia.org/wiki/Serial_Peripheral_Interface#Mode_numbers
     pub fn set_clock_polarity(&mut self, cpol: embedded_hal::spi::Polarity) {
-        self.clk = if cpol == Polarity::IdleLow {
-            ClockData::MsbPosIn
-        } else {
-            ClockData::MsbNegIn
+        let (clk, clk_out) = match cpol {
+            Polarity::IdleLow => (ClockData::MsbPosIn, ClockDataOut::MsbNeg),
+            Polarity::IdleHigh => (ClockData::MsbNegIn, ClockDataOut::MsbPos),
         };
 
-        self.clk_out = if cpol == Polarity::IdleLow {
-            ClockDataOut::MsbNeg
-        } else {
-            ClockDataOut::MsbPos
-        };
+        // destructuring assignments are unstable
+        self.clk = clk;
+        self.clk_out = clk_out
     }
 }
 
 impl<'a> embedded_hal::blocking::spi::Write<u8> for Spi<'a> {
     type Error = TimeoutError;
     fn write(&mut self, words: &[u8]) -> Result<(), Self::Error> {
+        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+            .clock_data_out(self.clk_out, words)
+            .send_immediate();
+
         let lock = self.mtx.lock().unwrap();
         let mut ft = lock.borrow_mut();
-        ft.clock_data_out(self.clk_out, words)
+        ft.write_all(cmd.as_slice())
     }
 }
 
 impl<'a> embedded_hal::blocking::spi::Transfer<u8> for Spi<'a> {
     type Error = TimeoutError;
     fn transfer<'w>(&mut self, words: &'w mut [u8]) -> Result<&'w [u8], Self::Error> {
+        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+            .clock_data(self.clk, words)
+            .send_immediate();
+
         let lock = self.mtx.lock().unwrap();
         let mut ft = lock.borrow_mut();
-        ft.clock_data(self.clk, words)?;
+        ft.write_all(cmd.as_slice())?;
+        ft.read_all(words)?;
+
         Ok(words)
     }
 }
@@ -242,17 +253,27 @@ impl<'a> embedded_hal::spi::FullDuplex<u8> for Spi<'a> {
     type Error = TimeoutError;
 
     fn read(&mut self) -> nb::Result<u8, Self::Error> {
+        let mut buf: [u8; 1] = [0];
+        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+            .clock_data(self.clk, &buf)
+            .send_immediate();
+
         let lock = self.mtx.lock().unwrap();
         let mut ft = lock.borrow_mut();
-        let mut buf: [u8; 1] = [0];
-        ft.clock_data(self.clk, &mut buf)?;
+        ft.write_all(cmd.as_slice())?;
+        ft.read_all(&mut buf)?;
+
         Ok(buf[0])
     }
 
     fn send(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
+        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+            .clock_data_out(self.clk_out, &[byte])
+            .send_immediate();
+
         let lock = self.mtx.lock().unwrap();
         let mut ft = lock.borrow_mut();
-        ft.clock_data_out(self.clk_out, &[byte])?;
+        ft.write_all(cmd.as_slice())?;
         Ok(())
     }
 }
@@ -278,7 +299,10 @@ impl<'a> OutputPin<'a> {
 
         let lock = self.mtx.lock().unwrap();
         let mut ft = lock.borrow_mut();
-        ft.set_gpio_lower(*value, 0x1B)
+        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+            .set_gpio_lower(*value, 0x1B)
+            .send_immediate();
+        ft.write_all(cmd.as_slice())
     }
 }
 
