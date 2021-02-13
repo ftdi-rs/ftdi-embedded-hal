@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved latency for GPIOs
 
 ### Fixed
+- Fixed the example code for `Ft232hHal::new`.
+
 ### Removed
 
 ## [0.2.0] - 2020-09-13

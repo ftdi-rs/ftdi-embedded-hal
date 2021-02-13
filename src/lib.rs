@@ -56,7 +56,7 @@ impl Ft232hHal {
     /// ```no_run
     /// use ftd2xx_embedded_hal as hal;
     ///
-    /// let ftdi = hal::Ft232hHal::new();
+    /// let ftdi = hal::Ft232hHal::new()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
     pub fn new() -> Result<Ft232hHal, DeviceTypeError> {
@@ -72,7 +72,7 @@ impl Ft232hHal {
     ///
     /// ```no_run
     /// use ftd2xx_embedded_hal as hal;
-    /// use libftd2xx::Ft232h;
+    /// use hal::libftd2xx::Ft232h;
     ///
     /// let ft = Ft232h::with_serial_number("FT59UO4C")?;
     /// let ftdi = hal::Ft232hHal::with_ft(ft);
@@ -83,7 +83,7 @@ impl Ft232hHal {
     ///
     /// ```no_run
     /// use ftd2xx_embedded_hal as hal;
-    /// use libftd2xx::Ft232h;
+    /// use hal::libftd2xx::Ft232h;
     ///
     /// let ft = Ft232h::with_description("My device description")?;
     /// let ftdi = hal::Ft232hHal::with_ft(ft);
