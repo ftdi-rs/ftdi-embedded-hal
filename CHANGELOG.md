@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed the example code for `Ft232hHal::new`.
+- Fixed pins 5, 6, 7 not being usable as outputs.
 
 ### Removed
 

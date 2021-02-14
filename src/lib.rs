@@ -176,11 +176,11 @@ impl<'a> Spi<'a> {
         let lock = mtx.lock().unwrap();
         let mut ft = lock.borrow_mut();
         let mut settings = MpsseSettings::default();
-        settings.mask = 0x1B;
+        settings.mask = 0xFB;
         ft.initialize_mpsse(&settings)?;
         ft.set_clock(100_000)?;
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
-            .set_gpio_lower(0x18, 0x1B)
+            .set_gpio_lower(0x00, 0xFB)
             .send_immediate();
         ft.write_all(cmd.as_slice())?;
 
@@ -289,6 +289,7 @@ impl<'a> OutputPin<'a> {
     }
 
     pub(crate) fn set(&self, state: bool) -> Result<(), TimeoutError> {
+        let lock = self.mtx.lock().unwrap();
         let mut value = self.value.lock().unwrap();
 
         if state {
@@ -297,10 +298,9 @@ impl<'a> OutputPin<'a> {
             *value &= !self.mask;
         };
 
-        let lock = self.mtx.lock().unwrap();
         let mut ft = lock.borrow_mut();
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
-            .set_gpio_lower(*value, 0x1B)
+            .set_gpio_lower(*value, 0xFB)
             .send_immediate();
         ft.write_all(cmd.as_slice())
     }
