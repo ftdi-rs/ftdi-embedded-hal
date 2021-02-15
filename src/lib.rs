@@ -27,7 +27,7 @@
 //! [libftd2xx crate]: https://github.com/newAM/libftd2xx-rs/
 //! [libftd2xx]: https://github.com/newAM/libftd2xx-rs
 //! [newAM/eeprom25aa02e48-rs]: https://github.com/newAM/eeprom25aa02e48-rs/blob/master/examples/ftdi.rs
-#![doc(html_root_url = "https://docs.rs/ftd2xx-embedded-hal/0.2.0")]
+#![doc(html_root_url = "https://docs.rs/ftd2xx-embedded-hal/0.3.0")]
 #![deny(unsafe_code, missing_docs)]
 
 pub use embedded_hal;
