@@ -33,6 +33,10 @@
 pub use embedded_hal;
 pub use libftd2xx;
 
+mod delay;
+
+pub use delay::Delay;
+
 use embedded_hal::spi::Polarity;
 use libftd2xx::{
     ClockData, ClockDataOut, DeviceTypeError, Ft232h, Ftdi, FtdiCommon, FtdiMpsse, MpsseCmdBuilder,
