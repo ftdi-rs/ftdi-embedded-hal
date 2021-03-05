@@ -1,6 +1,6 @@
 [package]
 name = "ftd2xx-embedded-hal"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Alex M. <alexmgit@protonmail.com>"]
 description = "embedded-hal implementation for FTDI USB devices."
 keywords = ["ftdi", "usb", "io", "hal"]
@@ -14,7 +14,7 @@ readme = "README.md"
 [dependencies]
 nb = "^1"
 embedded-hal = "~0.2.4"
-libftd2xx = "~0.24.0"
+libftd2xx = "~0.25.0"
 
 [dev-dependencies]
 version-sync = "~0.9.2"
