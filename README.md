@@ -14,6 +14,11 @@ The FTDI 2xx devices interface with your PC via USB.
 They have a multi-protocol synchronous serial engine which allows them to
 interface with most UART, SPI, and I2C embedded devices.
 
+**Note:**
+This is strictly a development tool.
+The crate contains runtime borrow checks and explicit panics to adapt the
+FTDI device into the [embedded-hal] traits.
+
 ## Setup
 
 One-time device setup instructions can be found in the [libftd2xx crate].
@@ -24,10 +29,8 @@ One-time device setup instructions can be found in the [libftd2xx crate].
 
 ## Limitations
 
-* Limited trait support: Blocking SPI and OutputPin traits are implemented.
+* Limited trait support: SPI and OutputPin traits are implemented.
 * Limited device support: FT232H.
-* No methods to control basic parameters such as clock frequency,
-  USB latency, timeouts, ect...
 
 [embedded-hal]: https://crates.io/crates/embedded-hal
 [ftdi-embedded-hal]: https://github.com/geomatsi/ftdi-embedded-hal
