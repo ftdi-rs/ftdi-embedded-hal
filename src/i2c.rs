@@ -11,6 +11,7 @@ const BITS_IN: ClockBitsIn = ClockBitsIn::MsbPos;
 const BITS_OUT: ClockBitsOut = ClockBitsOut::MsbNeg;
 
 /// FTDI I2C interface.
+#[derive(Debug)]
 pub struct I2c<'a> {
     /// Parent FTDI device.
     mtx: &'a Mutex<RefCell<Ft232hInner>>,

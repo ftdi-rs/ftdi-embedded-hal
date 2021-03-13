@@ -5,8 +5,10 @@
 /// This is an empty structure that forwards delays to [`std::thread::sleep`].
 ///
 /// [`sleep`]: std::thread::sleep
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct Delay {}
+#[derive(Debug, Clone, Copy)]
+pub struct Delay {
+    _0: (),
+}
 
 impl Delay {
     /// Create a new delay structure.
@@ -19,7 +21,7 @@ impl Delay {
     /// let mut my_delay: Delay = Delay::new();
     /// ```
     pub const fn new() -> Delay {
-        Delay {}
+        Delay { _0: () }
     }
 }
 

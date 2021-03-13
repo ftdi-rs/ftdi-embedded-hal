@@ -68,6 +68,16 @@ struct Ft232hInner {
     pins: [Option<PinUse>; 8],
 }
 
+impl std::fmt::Debug for Ft232hInner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Ft232hInner")
+            .field("direction", &self.direction)
+            .field("value", &self.value)
+            .field("pins", &self.pins)
+            .finish()
+    }
+}
+
 impl Ft232hInner {
     pub(crate) fn with_ftdi(ft: Ft232h) -> Ft232hInner {
         Ft232hInner {
@@ -108,6 +118,7 @@ pub struct Initialized;
 pub struct Uninitialized;
 
 /// FT232H device.
+#[derive(Debug)]
 pub struct Ft232hHal<INITIALIZED> {
     #[allow(dead_code)]
     init: INITIALIZED,
@@ -229,7 +240,7 @@ impl Ft232hHal<Uninitialized> {
         {
             let lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
             let mut inner = lock.borrow_mut();
-            let mut settings = mpsse_settings.clone();
+            let mut settings = *mpsse_settings;
             settings.mask = inner.direction;
             inner.ft.initialize_mpsse(&mpsse_settings)?;
         }

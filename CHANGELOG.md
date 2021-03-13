@@ -9,10 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added checks for pin allocation, trying to take output pins 0-2 while using
   the SPI interface will now result in panic.
 - Added I2C traits.
+- Added `Debug` for interface structures.
 
 ### Changed
 - Changed the FTDI MPSSE initialization to occur once globally for the device
   instead of inside the SPI device trait.
+- Changed the `Delay` structure to contain dummy data for possible future use.
+
+### Removed
+- Removed `Eq` and `PartialEq` traits on the `Delay` structure.
 
 ## [0.4.0] - 2021-03-05
 ### Added

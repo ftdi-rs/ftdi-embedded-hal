@@ -4,6 +4,7 @@ use libftd2xx::{ClockData, ClockDataOut, FtdiCommon, MpsseCmdBuilder, TimeoutErr
 use std::{cell::RefCell, sync::Mutex};
 
 /// FTDI SPI interface.
+#[derive(Debug)]
 pub struct Spi<'a> {
     /// Parent FTDI device.
     mtx: &'a Mutex<RefCell<Ft232hInner>>,

@@ -3,6 +3,7 @@ use libftd2xx::{FtdiCommon, MpsseCmdBuilder, TimeoutError};
 use std::{cell::RefCell, sync::Mutex};
 
 /// FTDI output pin.
+#[derive(Debug)]
 pub struct OutputPin<'a> {
     /// Parent FTDI device.
     mtx: &'a Mutex<RefCell<Ft232hInner>>,
