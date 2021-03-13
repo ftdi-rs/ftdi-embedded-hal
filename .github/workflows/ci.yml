@@ -11,9 +11,9 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - run: RUSTFLAGS="-D warnings" cargo build --verbose
-      - run: cargo test --verbose
-      - run: cargo doc --verbose
+      - run: RUSTFLAGS="-D warnings" cargo build
+      - run: cargo test
+      - run: cargo doc
 
   clippy_check:
     name: Clippy

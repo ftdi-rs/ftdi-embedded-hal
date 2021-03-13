@@ -22,7 +22,7 @@
 //!
 //! # Limitations
 //!
-//! * Limited trait support: SPI and OutputPin traits are implemented.
+//! * Limited trait support: SPI, I2C, Delay, and OutputPin traits are implemented.
 //! * Limited device support: FT232H.
 //!
 //! [embedded-hal]: https://crates.io/crates/embedded-hal
@@ -38,10 +38,12 @@ pub use libftd2xx;
 
 mod delay;
 mod gpio;
+mod i2c;
 mod spi;
 
 pub use delay::Delay;
 pub use gpio::OutputPin;
+pub use i2c::I2c;
 pub use spi::Spi;
 
 use libftd2xx::{DeviceTypeError, Ft232h, Ftdi, FtdiMpsse, MpsseSettings, TimeoutError};
@@ -50,6 +52,7 @@ use std::{cell::RefCell, convert::TryFrom, sync::Mutex, time::Duration};
 /// State tracker for each pin on the FTDI chip.
 #[derive(Debug, Clone, Copy)]
 enum PinUse {
+    MpsseI2c,
     MpsseSpi,
     Output,
 }
@@ -174,7 +177,7 @@ impl Ft232hHal<Uninitialized> {
     ///
     /// ```no_run
     /// use ftd2xx_embedded_hal as hal;
-    /// use hal::{Uninitialized, Initialized, Ft232hHal};
+    /// use hal::{Ft232hHal, Initialized, Uninitialized};
     ///
     /// let ftdi: Ft232hHal<Uninitialized> = hal::Ft232hHal::new()?;
     /// let ftdi: Ft232hHal<Initialized> = ftdi.init_default()?;
@@ -206,8 +209,8 @@ impl Ft232hHal<Uninitialized> {
     ///
     /// ```no_run
     /// use ftd2xx_embedded_hal as hal;
-    /// use hal::{Uninitialized, Initialized, Ft232hHal};
     /// use hal::libftd2xx::MpsseSettings;
+    /// use hal::{Ft232hHal, Initialized, Uninitialized};
     ///
     /// let ftdi: Ft232hHal<Uninitialized> = hal::Ft232hHal::new()?;
     /// let ftdi: Ft232hHal<Initialized> = ftdi.init(&MpsseSettings {
@@ -256,11 +259,38 @@ impl Ft232hHal<Initialized> {
     /// use ftd2xx_embedded_hal as hal;
     ///
     /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
-    /// let spi = ftdi.spi()?;
+    /// let mut spi = ftdi.spi()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
     pub fn spi(&self) -> Result<Spi, TimeoutError> {
         Spi::new(&self.mtx)
+    }
+
+    /// Aquire the I2C peripheral for the FT232H.
+    ///
+    /// Pin assignments:
+    /// * AD0 => SCL
+    /// * AD1 => SDA
+    /// * AD2 => SDA
+    ///
+    /// Yes, AD1 and AD2 are both SDA.
+    /// These pins must be shorted together for I2C operation.
+    ///
+    /// # Panics
+    ///
+    /// Panics if pin 0, 1, or 2 are already in use.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use ftd2xx_embedded_hal as hal;
+    ///
+    /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
+    /// let mut i2c = ftdi.i2c()?;
+    /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn i2c(&self) -> Result<I2c, TimeoutError> {
+        I2c::new(&self.mtx)
     }
 
     /// Aquire the digital output pin 0 for the FT232H.

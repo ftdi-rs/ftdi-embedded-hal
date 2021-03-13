@@ -3,7 +3,7 @@ use embedded_hal::spi::Polarity;
 use libftd2xx::{ClockData, ClockDataOut, FtdiCommon, MpsseCmdBuilder, TimeoutError};
 use std::{cell::RefCell, sync::Mutex};
 
-/// SPI interface child structure.
+/// FTDI SPI interface.
 pub struct Spi<'a> {
     /// Parent FTDI device.
     mtx: &'a Mutex<RefCell<Ft232hInner>>,

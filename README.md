@@ -29,7 +29,7 @@ One-time device setup instructions can be found in the [libftd2xx crate].
 
 ## Limitations
 
-* Limited trait support: SPI and OutputPin traits are implemented.
+* Limited trait support: SPI, I2C, Delay, and OutputPin traits are implemented.
 * Limited device support: FT232H.
 
 [embedded-hal]: https://crates.io/crates/embedded-hal
