@@ -138,39 +138,39 @@ impl Ft232hHal<Uninitialized> {
     /// ```
     pub fn new() -> Result<Ft232hHal<Uninitialized>, DeviceTypeError> {
         let ft: Ft232h = Ft232h::try_from(&mut Ftdi::new()?)?;
-        Ok(Self::with_ft(ft))
+        Ok(ft.into())
     }
 
-    /// Create a new FT232H structure from a specific FT232H device.
+    /// Create a new FT232H structure from a serial number.
     ///
-    /// # Examples
-    ///
-    /// Selecting a device with a specific serial number.
+    /// # Example
     ///
     /// ```no_run
     /// use ftd2xx_embedded_hal as hal;
-    /// use hal::libftd2xx::Ft232h;
     ///
-    /// let ft = Ft232h::with_serial_number("FT59UO4C")?;
-    /// let ftdi = hal::Ft232hHal::with_ft(ft);
+    /// let ftdi = hal::Ft232hHal::with_serial_number("FT6ASGXH")?.init_default()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
+    pub fn with_serial_number(sn: &str) -> Result<Ft232hHal<Uninitialized>, DeviceTypeError> {
+        let ft: Ft232h = Ft232h::with_serial_number(sn)?;
+        Ok(ft.into())
+    }
+
+    /// Open a `Ft4232h` device by its device description.
     ///
-    /// Selecting a device with a specific description.
+    /// # Example
     ///
     /// ```no_run
-    /// use ftd2xx_embedded_hal as hal;
-    /// use hal::libftd2xx::Ft232h;
+    /// use libftd2xx::Ft4232h;
     ///
-    /// let ft = Ft232h::with_description("My device description")?;
-    /// let ftdi = hal::Ft232hHal::with_ft(ft).init_default()?;
-    /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
+    /// Ft4232h::with_description("FT4232H-56Q MiniModule A")?;
+    /// # Ok::<(), libftd2xx::DeviceTypeError>(())
     /// ```
-    pub fn with_ft(ft: Ft232h) -> Ft232hHal<Uninitialized> {
-        Ft232hHal {
-            init: Uninitialized,
-            mtx: Mutex::new(RefCell::new(Ft232hInner::with_ftdi(ft))),
-        }
+    pub fn with_description(
+        description: &str,
+    ) -> Result<Ft232hHal<Uninitialized>, DeviceTypeError> {
+        let ft: Ft232h = Ft232h::with_description(description)?;
+        Ok(ft.into())
     }
 
     /// Initialize the FTDI MPSSE with sane defaults.
@@ -249,6 +249,42 @@ impl Ft232hHal<Uninitialized> {
             init: Initialized,
             mtx: self.mtx,
         })
+    }
+}
+
+impl From<Ft232h> for Ft232hHal<Uninitialized> {
+    /// Create a new FT232H structure from a specific FT232H device.
+    ///
+    /// # Examples
+    ///
+    /// Selecting a device with a specific serial number.
+    ///
+    /// ```no_run
+    /// use ftd2xx_embedded_hal as hal;
+    /// use hal::libftd2xx::Ft232h;
+    /// use hal::Ft232hHal;
+    ///
+    /// let ft = Ft232h::with_serial_number("FT59UO4C")?;
+    /// let ftdi = Ft232hHal::from(ft).init_default()?;
+    /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
+    /// ```
+    ///
+    /// Selecting a device with a specific description.
+    ///
+    /// ```no_run
+    /// use ftd2xx_embedded_hal as hal;
+    /// use hal::libftd2xx::Ft232h;
+    /// use hal::Ft232hHal;
+    ///
+    /// let ft = Ft232h::with_description("My device description")?;
+    /// let ftdi = Ft232hHal::from(ft).init_default()?;
+    /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
+    /// ```
+    fn from(ft: Ft232h) -> Self {
+        Ft232hHal {
+            init: Uninitialized,
+            mtx: Mutex::new(RefCell::new(Ft232hInner::with_ftdi(ft))),
+        }
     }
 }
 
