@@ -3,6 +3,11 @@ use libftd2xx::{FtdiCommon, MpsseCmdBuilder, TimeoutError};
 use std::{cell::RefCell, sync::Mutex};
 
 /// FTDI output pin.
+///
+/// This is created by calling [`Ft232hHal::ad0`] - [`Ft232hHal::ad7`].
+///
+/// [`Ft232hHal::ad0`]: crate::Ft232hHal::ad0
+/// [`Ft232hHal::ad7`]: crate::Ft232hHal::ad7
 #[derive(Debug)]
 pub struct OutputPin<'a> {
     /// Parent FTDI device.

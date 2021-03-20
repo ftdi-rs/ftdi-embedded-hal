@@ -3,7 +3,7 @@
 //!
 //! This enables development of embedded devices drivers without the use of a
 //! microcontroller.
-//! The FTDI 2xx devices interface with your PC via USB.
+//! The FTDI D2xx devices interface with your PC via USB.
 //! They have a multi-protocol synchronous serial engine which allows them to
 //! interface with most UART, SPI, and I2C embedded devices.
 //!
@@ -19,6 +19,40 @@
 //! # Examples
 //!
 //! * [newAM/eeprom25aa02e48-rs]
+//! * [newAM/bme280-rs]
+//!
+//! ## SPI
+//!
+//! ```no_run
+//! use embedded_hal::prelude::*;
+//! use ftd2xx_embedded_hal::Ft232hHal;
+//!
+//! let ftdi = Ft232hHal::new()?.init_default()?;
+//! let mut spi = ftdi.spi()?;
+//! # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
+//! ```
+//!
+//! ## I2C
+//!
+//! ```no_run
+//! use embedded_hal::prelude::*;
+//! use ftd2xx_embedded_hal::Ft232hHal;
+//!
+//! let ftdi = Ft232hHal::new()?.init_default()?;
+//! let mut i2c = ftdi.i2c()?;
+//! # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
+//! ```
+//!
+//! # GPIO
+//!
+//! ```no_run
+//! use embedded_hal::prelude::*;
+//! use ftd2xx_embedded_hal::Ft232hHal;
+//!
+//! let ftdi = Ft232hHal::new()?.init_default()?;
+//! let mut gpio = ftdi.ad6();
+//! # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
+//! ```
 //!
 //! # Limitations
 //!
@@ -29,8 +63,9 @@
 //! [ftdi-embedded-hal]: https://github.com/geomatsi/ftdi-embedded-hal
 //! [libftd2xx crate]: https://github.com/newAM/libftd2xx-rs/
 //! [libftd2xx]: https://github.com/newAM/libftd2xx-rs
-//! [newAM/eeprom25aa02e48-rs]: https://github.com/newAM/eeprom25aa02e48-rs/blob/master/examples/ftdi.rs
-#![doc(html_root_url = "https://docs.rs/ftd2xx-embedded-hal/0.4.0")]
+//! [newAM/eeprom25aa02e48-rs]: https://github.com/newAM/eeprom25aa02e48-rs/blob/main/examples/ftdi.rs
+//! [newAM/bme280-rs]: https://github.com/newAM/bme280-rs/blob/main/examples/ftdi.rs
+#![doc(html_root_url = "https://docs.rs/ftd2xx-embedded-hal/0.5.0")]
 #![deny(unsafe_code, missing_docs)]
 
 pub use embedded_hal;
@@ -47,16 +82,27 @@ pub use i2c::I2c;
 pub use spi::Spi;
 
 use libftd2xx::{DeviceTypeError, Ft232h, Ftdi, FtdiMpsse, MpsseSettings, TimeoutError};
-use std::{cell::RefCell, convert::TryFrom, sync::Mutex, time::Duration};
+use std::{cell::RefCell, convert::TryInto, sync::Mutex, time::Duration};
 
 /// State tracker for each pin on the FTDI chip.
 #[derive(Debug, Clone, Copy)]
 enum PinUse {
-    MpsseI2c,
-    MpsseSpi,
+    I2c,
+    Spi,
     Output,
 }
 
+impl std::fmt::Display for PinUse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PinUse::I2c => write!(f, "I2C"),
+            PinUse::Spi => write!(f, "SPI"),
+            PinUse::Output => write!(f, "GPIO"),
+        }
+    }
+}
+
+#[derive(Debug)]
 struct Ft232hInner {
     /// FTDI device.
     ft: Ft232h,
@@ -68,37 +114,29 @@ struct Ft232hInner {
     pins: [Option<PinUse>; 8],
 }
 
-impl std::fmt::Debug for Ft232hInner {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Ft232hInner")
-            .field("direction", &self.direction)
-            .field("value", &self.value)
-            .field("pins", &self.pins)
-            .finish()
+impl Ft232hInner {
+    /// Allocate a pin for a specific use.
+    pub fn allocate_pin(&mut self, idx: u8, purpose: PinUse) {
+        assert!(idx < 8, "Pin index {} is out of range 0 - 7", idx);
+
+        if let Some(current) = self.pins[usize::from(idx)] {
+            panic!(
+                "Unable to allocate pin {} for {}, pin is already allocated for {}",
+                idx, purpose, current
+            );
+        } else {
+            self.pins[usize::from(idx)] = Some(purpose)
+        }
     }
 }
 
-impl Ft232hInner {
-    pub(crate) fn with_ftdi(ft: Ft232h) -> Ft232hInner {
+impl From<Ft232h> for Ft232hInner {
+    fn from(ft: Ft232h) -> Self {
         Ft232hInner {
             ft,
             direction: 0xFB,
             value: 0x00,
             pins: [None; 8],
-        }
-    }
-
-    /// Allocate a pin for a specific use.
-    pub(crate) fn allocate_pin(&mut self, idx: u8, purpose: PinUse) {
-        assert!(idx < 8, "Pin index {} is out of range 0 - 7", idx);
-
-        if let Some(current) = self.pins[usize::from(idx)] {
-            panic!(
-                "Unable to allocate pin {}, pin is allocated for {:?}",
-                idx, current
-            );
-        } else {
-            self.pins[usize::from(idx)] = Some(purpose)
         }
     }
 }
@@ -137,7 +175,7 @@ impl Ft232hHal<Uninitialized> {
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
     pub fn new() -> Result<Ft232hHal<Uninitialized>, DeviceTypeError> {
-        let ft: Ft232h = Ft232h::try_from(&mut Ftdi::new()?)?;
+        let ft: Ft232h = Ftdi::new()?.try_into()?;
         Ok(ft.into())
     }
 
@@ -283,7 +321,7 @@ impl From<Ft232h> for Ft232hHal<Uninitialized> {
     fn from(ft: Ft232h) -> Self {
         Ft232hHal {
             init: Uninitialized,
-            mtx: Mutex::new(RefCell::new(Ft232hInner::with_ftdi(ft))),
+            mtx: Mutex::new(RefCell::new(ft.into())),
         }
     }
 }

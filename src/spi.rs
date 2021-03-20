@@ -4,6 +4,10 @@ use libftd2xx::{ClockData, ClockDataOut, FtdiCommon, MpsseCmdBuilder, TimeoutErr
 use std::{cell::RefCell, sync::Mutex};
 
 /// FTDI SPI interface.
+///
+/// This is created by calling [`Ft232hHal::spi`].
+///
+/// [`Ft232hHal::spi`]: crate::Ft232hHal::spi
 #[derive(Debug)]
 pub struct Spi<'a> {
     /// Parent FTDI device.
@@ -22,9 +26,9 @@ impl<'a> Spi<'a> {
     pub(crate) fn new(mtx: &Mutex<RefCell<Ft232hInner>>) -> Result<Spi, TimeoutError> {
         let lock = mtx.lock().expect("Failed to aquire FTDI mutex");
         let mut inner = lock.borrow_mut();
-        inner.allocate_pin(0, PinUse::MpsseSpi);
-        inner.allocate_pin(1, PinUse::MpsseSpi);
-        inner.allocate_pin(2, PinUse::MpsseSpi);
+        inner.allocate_pin(0, PinUse::Spi);
+        inner.allocate_pin(1, PinUse::Spi);
+        inner.allocate_pin(2, PinUse::Spi);
 
         // clear direction of first 3 pins
         inner.direction &= !0x07;

@@ -11,6 +11,10 @@ const BITS_IN: ClockBitsIn = ClockBitsIn::MsbPos;
 const BITS_OUT: ClockBitsOut = ClockBitsOut::MsbNeg;
 
 /// FTDI I2C interface.
+///
+/// This is created by calling [`Ft232hHal::i2c`].
+///
+/// [`Ft232hHal::i2c`]: crate::Ft232hHal::i2c
 #[derive(Debug)]
 pub struct I2c<'a> {
     /// Parent FTDI device.
@@ -19,16 +23,16 @@ pub struct I2c<'a> {
     ///
     /// The units for these are dimensionless number of MPSSE commands.
     /// More MPSSE commands roughly correlates to more time.
-    start_stop_cmds: u32,
+    start_stop_cmds: u8,
 }
 
 impl<'a> I2c<'a> {
     pub(crate) fn new(mtx: &Mutex<RefCell<Ft232hInner>>) -> Result<I2c, TimeoutError> {
         let lock = mtx.lock().expect("Failed to aquire FTDI mutex");
         let mut inner = lock.borrow_mut();
-        inner.allocate_pin(0, PinUse::MpsseI2c);
-        inner.allocate_pin(1, PinUse::MpsseI2c);
-        inner.allocate_pin(2, PinUse::MpsseI2c);
+        inner.allocate_pin(0, PinUse::I2c);
+        inner.allocate_pin(1, PinUse::I2c);
+        inner.allocate_pin(2, PinUse::I2c);
 
         // clear direction of first 3 pins
         inner.direction &= !0x07;
@@ -41,6 +45,7 @@ impl<'a> I2c<'a> {
         // set GPIO pins to new state
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
             .set_gpio_lower(inner.value, inner.direction)
+            .enable_3phase_data_clocking()
             .send_immediate();
         inner.ft.write_all(cmd.as_slice())?;
 
@@ -68,7 +73,7 @@ impl<'a> I2c<'a> {
     /// i2c.set_stop_start_len(10);
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
-    pub fn set_stop_start_len(&mut self, start_stop_cmds: u32) {
+    pub fn set_stop_start_len(&mut self, start_stop_cmds: u8) {
         self.start_stop_cmds = start_stop_cmds
     }
 }

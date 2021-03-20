@@ -10,7 +10,7 @@ for the for the FTDI chips using the [libftd2xx] drivers.
 
 This enables development of embedded devices drivers without the use of a
 microcontroller.
-The FTDI 2xx devices interface with your PC via USB.
+The FTDI D2xx devices interface with your PC via USB.
 They have a multi-protocol synchronous serial engine which allows them to
 interface with most UART, SPI, and I2C embedded devices.
 
@@ -26,6 +26,37 @@ One-time device setup instructions can be found in the [libftd2xx crate].
 ## Examples
 
 * [newAM/eeprom25aa02e48-rs]
+* [newAM/bme280-rs]
+
+### SPI
+
+```rust
+use embedded_hal::prelude::*;
+use ftd2xx_embedded_hal::Ft232hHal;
+
+let ftdi = Ft232hHal::new()?.init_default()?;
+let mut spi = ftdi.spi()?;
+```
+
+### I2C
+
+```rust
+use embedded_hal::prelude::*;
+use ftd2xx_embedded_hal::Ft232hHal;
+
+let ftdi = Ft232hHal::new()?.init_default()?;
+let mut i2c = ftdi.i2c()?;
+```
+
+## GPIO
+
+```rust
+use embedded_hal::prelude::*;
+use ftd2xx_embedded_hal::Ft232hHal;
+
+let ftdi = Ft232hHal::new()?.init_default()?;
+let mut gpio = ftdi.ad6();
+```
 
 ## Limitations
 
@@ -36,4 +67,5 @@ One-time device setup instructions can be found in the [libftd2xx crate].
 [ftdi-embedded-hal]: https://github.com/geomatsi/ftdi-embedded-hal
 [libftd2xx crate]: https://github.com/newAM/libftd2xx-rs/
 [libftd2xx]: https://github.com/newAM/libftd2xx-rs
-[newAM/eeprom25aa02e48-rs]: https://github.com/newAM/eeprom25aa02e48-rs/blob/master/examples/ftdi.rs
+[newAM/eeprom25aa02e48-rs]: https://github.com/newAM/eeprom25aa02e48-rs/blob/main/examples/ftdi.rs
+[newAM/bme280-rs]: https://github.com/newAM/bme280-rs/blob/main/examples/ftdi.rs

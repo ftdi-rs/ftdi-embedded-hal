@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] - 2021-03-20
 ### Added
 - Added checks for pin allocation, trying to take output pins 0-2 while using
   the SPI interface will now result in panic.
@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed the FTDI MPSSE initialization to occur once globally for the device
   instead of inside the SPI device trait.
 - Changed the `Delay` structure to contain dummy data for possible future use.
-- Change the `with_ft` to `impl From<Ft232h> for Ft232hHal`.
+- Change the `Ft232hHal::with_ft` to `impl From<Ft232h> for Ft232hHal`.
 
 ### Removed
 - Removed `Eq` and `PartialEq` traits on the `Delay` structure.
@@ -49,7 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2020-09-12
 - Initial release
 
-[Unreleased]: https://github.com/newAM/ftd2xx-embedded-hal/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/newAM/ftd2xx-embedded-hal/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/newAM/ftd2xx-embedded-hal/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/newAM/ftd2xx-embedded-hal/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/newAM/ftd2xx-embedded-hal/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/newAM/ftd2xx-embedded-hal/compare/v0.1.0...v0.2.0
