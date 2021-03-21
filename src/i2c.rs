@@ -99,8 +99,8 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2c<'a> {
 
         mpsse_cmd = mpsse_cmd
             // SAD+R
-            .set_gpio_lower(inner.value, SDA | SCL | inner.direction)
-            .clock_bits_out(BITS_OUT, address << 1, 8)
+            .set_gpio_lower(inner.value, SCL | SDA | inner.direction)
+            .clock_bits_out(BITS_OUT, (address << 1) | 1, 8)
             // SAK
             .set_gpio_lower(inner.value, SCL | inner.direction)
             .clock_bits_in(BITS_IN, 1);
@@ -113,7 +113,7 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2c<'a> {
             if idx == buffer.len() - 1 {
                 // NMAK
                 mpsse_cmd = mpsse_cmd
-                    .set_gpio_lower(inner.value, SCL | inner.direction)
+                    .set_gpio_lower(inner.value, SCL | SDA | inner.direction)
                     .clock_bits_out(BITS_OUT, 0x80, 1)
             } else {
                 // MAK
@@ -165,28 +165,20 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2c<'a> {
 
         mpsse_cmd = mpsse_cmd
             // SAD+W
-            .set_gpio_lower(inner.value, SDA | SCL | inner.direction)
+            .set_gpio_lower(inner.value, SCL | SDA | inner.direction)
             .clock_bits_out(BITS_OUT, addr << 1, 8)
             // SAK
             .set_gpio_lower(inner.value, SCL | inner.direction)
             .clock_bits_in(BITS_IN, 1);
 
-        for (idx, byte) in bytes.iter().enumerate() {
-            // Bi
+        for byte in bytes.iter() {
             mpsse_cmd = mpsse_cmd
+                // Bi
+                .set_gpio_lower(inner.value, SCL | SDA | inner.direction)
+                .clock_bits_out(BITS_OUT, *byte, 8)
+                // SAK
                 .set_gpio_lower(inner.value, SCL | inner.direction)
-                .clock_bits_out(BITS_OUT, *byte, 8);
-            if idx == bytes.len() - 1 {
-                // NACK
-                mpsse_cmd = mpsse_cmd
-                    .set_gpio_lower(inner.value, SCL | inner.direction)
-                    .clock_bits_in(BITS_IN, 1);
-            } else {
-                // ACK
-                mpsse_cmd = mpsse_cmd
-                    .set_gpio_lower(inner.value, SCL | SDA | inner.direction)
-                    .clock_bits_in(BITS_IN, 1);
-            }
+                .clock_bits_in(BITS_IN, 1);
         }
 
         // SP
@@ -239,7 +231,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2c<'a> {
 
         mpsse_cmd = mpsse_cmd
             // SAD + W
-            .set_gpio_lower(inner.value, SDA | SCL | inner.direction)
+            .set_gpio_lower(inner.value, SCL | SDA | inner.direction)
             .clock_bits_out(BITS_OUT, address << 1, 8)
             // SAK
             .set_gpio_lower(inner.value, SCL | inner.direction)
@@ -248,7 +240,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2c<'a> {
         for byte in bytes {
             mpsse_cmd = mpsse_cmd
                 // Oi
-                .set_gpio_lower(inner.value, SDA | SCL | inner.direction)
+                .set_gpio_lower(inner.value, SCL | SDA | inner.direction)
                 .clock_bits_out(BITS_OUT, *byte, 8)
                 // SAK
                 .set_gpio_lower(inner.value, SCL | inner.direction)
@@ -281,7 +273,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2c<'a> {
             if idx == buffer.len() - 1 {
                 // NMAK
                 mpsse_cmd = mpsse_cmd
-                    .set_gpio_lower(inner.value, SCL | inner.direction)
+                    .set_gpio_lower(inner.value, SCL | SDA | inner.direction)
                     .clock_bits_out(BITS_OUT, 0x80, 1)
             } else {
                 // MAK

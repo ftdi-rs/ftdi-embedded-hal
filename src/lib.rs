@@ -65,7 +65,7 @@
 //! [libftd2xx]: https://github.com/newAM/libftd2xx-rs
 //! [newAM/eeprom25aa02e48-rs]: https://github.com/newAM/eeprom25aa02e48-rs/blob/main/examples/ftdi.rs
 //! [newAM/bme280-rs]: https://github.com/newAM/bme280-rs/blob/main/examples/ftdi.rs
-#![doc(html_root_url = "https://docs.rs/ftd2xx-embedded-hal/0.5.0")]
+#![doc(html_root_url = "https://docs.rs/ftd2xx-embedded-hal/0.5.1")]
 #![deny(unsafe_code, missing_docs)]
 
 pub use embedded_hal;
@@ -249,6 +249,9 @@ impl Ft232hHal<Uninitialized> {
     /// Initialize the FTDI MPSSE with custom values.
     ///
     /// **Note:** The `mask` field of [`MpsseSettings`] is ignored for this function.
+    ///
+    /// **Note:** The clock frequency will be 2/3 of the specified value when in
+    /// I2C mode.
     ///
     /// # Panics
     ///
