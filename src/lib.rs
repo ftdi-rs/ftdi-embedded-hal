@@ -1,11 +1,11 @@
 //! Inspired by [ftdi-embedded-hal] this is an [embedded-hal] implementation
 //! for the for the FTDI chips using the [libftd2xx] drivers.
 //!
-//! This enables development of embedded devices drivers without the use of a
+//! This enables development of embedded device drivers without the use of a
 //! microcontroller.
-//! The FTDI D2xx devices interface with your PC via USB.
-//! They have a multi-protocol synchronous serial engine which allows them to
-//! interface with most UART, SPI, and I2C embedded devices.
+//! The FTDI D2xx devices interface with your PC via USB, and provide a
+//! multi-protocol synchronous serial engine to interface with most UART, SPI,
+//! and I2C embedded devices.
 //!
 //! **Note:**
 //! This is strictly a development tool.
