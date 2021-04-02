@@ -61,7 +61,7 @@ let mut gpio = ftdi.ad6();
 ## Limitations
 
 * Limited trait support: SPI, I2C, Delay, and OutputPin traits are implemented.
-* Limited device support: FT232H.
+* Limited device support: FT232H, FT4232H.
 
 [embedded-hal]: https://crates.io/crates/embedded-hal
 [ftdi-embedded-hal]: https://github.com/geomatsi/ftdi-embedded-hal

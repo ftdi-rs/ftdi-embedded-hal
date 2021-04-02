@@ -1,23 +1,23 @@
-use crate::{Ft232hInner, PinUse};
+use crate::{FtInner, PinUse};
 use libftd2xx::{FtdiCommon, MpsseCmdBuilder, TimeoutError};
 use std::{cell::RefCell, sync::Mutex};
 
 /// FTDI output pin.
 ///
-/// This is created by calling [`Ft232hHal::ad0`] - [`Ft232hHal::ad7`].
+/// This is created by calling [`FtHal::ad0`] - [`FtHal::ad7`].
 ///
-/// [`Ft232hHal::ad0`]: crate::Ft232hHal::ad0
-/// [`Ft232hHal::ad7`]: crate::Ft232hHal::ad7
+/// [`FtHal::ad0`]: crate::FtHal::ad0
+/// [`FtHal::ad7`]: crate::FtHal::ad7
 #[derive(Debug)]
-pub struct OutputPin<'a> {
+pub struct OutputPin<'a, Device> {
     /// Parent FTDI device.
-    mtx: &'a Mutex<RefCell<Ft232hInner>>,
+    mtx: &'a Mutex<RefCell<FtInner<Device>>>,
     /// GPIO pin index.  0-7 for the FT232H.
     idx: u8,
 }
 
-impl<'a> OutputPin<'a> {
-    pub(crate) fn new(mtx: &'a Mutex<RefCell<Ft232hInner>>, idx: u8) -> OutputPin<'a> {
+impl<'a, Device: FtdiCommon> OutputPin<'a, Device> {
+    pub(crate) fn new(mtx: &'a Mutex<RefCell<FtInner<Device>>>, idx: u8) -> OutputPin<'a, Device> {
         let lock = mtx.lock().expect("Failed to aquire FTDI mutex");
         let mut inner = lock.borrow_mut();
         inner.allocate_pin(idx, PinUse::Output);
@@ -39,14 +39,16 @@ impl<'a> OutputPin<'a> {
             .send_immediate();
         inner.ft.write_all(cmd.as_slice())
     }
+}
 
+impl<'a, Device> OutputPin<'a, Device> {
     /// Convert the GPIO pin index to a pin mask
     pub(crate) const fn mask(&self) -> u8 {
         1 << self.idx
     }
 }
 
-impl<'a> embedded_hal::digital::v2::OutputPin for OutputPin<'a> {
+impl<'a, Device: FtdiCommon> embedded_hal::digital::v2::OutputPin for OutputPin<'a, Device> {
     type Error = TimeoutError;
 
     fn set_low(&mut self) -> Result<(), Self::Error> {

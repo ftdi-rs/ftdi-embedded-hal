@@ -1,4 +1,4 @@
-use crate::{Ft232hInner, PinUse};
+use crate::{FtInner, PinUse};
 use libftd2xx::{ClockBitsIn, ClockBitsOut, FtdiCommon, MpsseCmdBuilder, TimeoutError};
 use std::{cell::RefCell, sync::Mutex};
 
@@ -12,13 +12,13 @@ const BITS_OUT: ClockBitsOut = ClockBitsOut::MsbNeg;
 
 /// FTDI I2C interface.
 ///
-/// This is created by calling [`Ft232hHal::i2c`].
+/// This is created by calling [`FtHal::i2c`].
 ///
-/// [`Ft232hHal::i2c`]: crate::Ft232hHal::i2c
+/// [`FtHal::i2c`]: crate::FtHal::i2c
 #[derive(Debug)]
-pub struct I2c<'a> {
+pub struct I2c<'a, Device> {
     /// Parent FTDI device.
-    mtx: &'a Mutex<RefCell<Ft232hInner>>,
+    mtx: &'a Mutex<RefCell<FtInner<Device>>>,
     /// Length of the start, repeated start, and stop conditions.
     ///
     /// The units for these are dimensionless number of MPSSE commands.
@@ -26,8 +26,8 @@ pub struct I2c<'a> {
     start_stop_cmds: u8,
 }
 
-impl<'a> I2c<'a> {
-    pub(crate) fn new(mtx: &Mutex<RefCell<Ft232hInner>>) -> Result<I2c, TimeoutError> {
+impl<'a, Device: FtdiCommon> I2c<'a, Device> {
+    pub(crate) fn new(mtx: &Mutex<RefCell<FtInner<Device>>>) -> Result<I2c<Device>, TimeoutError> {
         let lock = mtx.lock().expect("Failed to aquire FTDI mutex");
         let mut inner = lock.borrow_mut();
         inner.allocate_pin(0, PinUse::I2c);
@@ -78,7 +78,7 @@ impl<'a> I2c<'a> {
     }
 }
 
-impl<'a> embedded_hal::blocking::i2c::Read for I2c<'a> {
+impl<'a, Device: FtdiCommon> embedded_hal::blocking::i2c::Read for I2c<'a, Device> {
     type Error = TimeoutError;
 
     fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
@@ -144,7 +144,7 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2c<'a> {
     }
 }
 
-impl<'a> embedded_hal::blocking::i2c::Write for I2c<'a> {
+impl<'a, Device: FtdiCommon> embedded_hal::blocking::i2c::Write for I2c<'a, Device> {
     type Error = TimeoutError;
 
     fn write(&mut self, addr: u8, bytes: &[u8]) -> Result<(), Self::Error> {
@@ -201,7 +201,7 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2c<'a> {
     }
 }
 
-impl<'a> embedded_hal::blocking::i2c::WriteRead for I2c<'a> {
+impl<'a, Device: FtdiCommon> embedded_hal::blocking::i2c::WriteRead for I2c<'a, Device> {
     type Error = TimeoutError;
 
     fn write_read(

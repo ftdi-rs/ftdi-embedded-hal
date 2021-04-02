@@ -79,9 +79,13 @@ mod spi;
 pub use delay::Delay;
 pub use gpio::OutputPin;
 pub use i2c::I2c;
+use libftd2xx::Ft232h;
+use libftd2xx::Ft4232h;
+use libftd2xx::FtdiCommon;
 pub use spi::Spi;
 
-use libftd2xx::{DeviceTypeError, Ft232h, Ftdi, FtdiMpsse, MpsseSettings, TimeoutError};
+use libftd2xx::{DeviceTypeError, Ftdi, FtdiMpsse, MpsseSettings, TimeoutError};
+use std::convert::TryFrom;
 use std::{cell::RefCell, convert::TryInto, sync::Mutex, time::Duration};
 
 /// State tracker for each pin on the FTDI chip.
@@ -103,9 +107,9 @@ impl std::fmt::Display for PinUse {
 }
 
 #[derive(Debug)]
-struct Ft232hInner {
+struct FtInner<Device> {
     /// FTDI device.
-    ft: Ft232h,
+    ft: Device,
     /// GPIO direction.
     direction: u8,
     /// GPIO value.
@@ -114,7 +118,7 @@ struct Ft232hInner {
     pins: [Option<PinUse>; 8],
 }
 
-impl Ft232hInner {
+impl<Device: FtdiCommon> FtInner<Device> {
     /// Allocate a pin for a specific use.
     pub fn allocate_pin(&mut self, idx: u8, purpose: PinUse) {
         assert!(idx < 8, "Pin index {} is out of range 0 - 7", idx);
@@ -130,9 +134,9 @@ impl Ft232hInner {
     }
 }
 
-impl From<Ft232h> for Ft232hInner {
-    fn from(ft: Ft232h) -> Self {
-        Ft232hInner {
+impl<Device: FtdiCommon> From<Device> for FtInner<Device> {
+    fn from(ft: Device) -> Self {
+        FtInner {
             ft,
             direction: 0xFB,
             value: 0x00,
@@ -156,15 +160,23 @@ pub struct Initialized;
 pub struct Uninitialized;
 
 /// FT232H device.
+pub type Ft232hHal<T> = FtHal<Ft232h, T>;
+
+/// FT4232H device.
+pub type Ft4232hHal<T> = FtHal<Ft4232h, T>;
+
+/// FTxxx device.
 #[derive(Debug)]
-pub struct Ft232hHal<INITIALIZED> {
+pub struct FtHal<Device, INITIALIZED> {
     #[allow(dead_code)]
     init: INITIALIZED,
-    mtx: Mutex<RefCell<Ft232hInner>>,
+    mtx: Mutex<RefCell<FtInner<Device>>>,
 }
 
-impl Ft232hHal<Uninitialized> {
-    /// Create a new FT232H structure.
+impl<Device: FtdiCommon + TryFrom<Ftdi, Error = DeviceTypeError> + FtdiMpsse>
+    FtHal<Device, Uninitialized>
+{
+    /// Create a new FTxxx structure.
     ///
     /// # Example
     ///
@@ -174,12 +186,12 @@ impl Ft232hHal<Uninitialized> {
     /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
-    pub fn new() -> Result<Ft232hHal<Uninitialized>, DeviceTypeError> {
-        let ft: Ft232h = Ftdi::new()?.try_into()?;
+    pub fn new() -> Result<FtHal<Device, Uninitialized>, DeviceTypeError> {
+        let ft: Device = Ftdi::new()?.try_into()?;
         Ok(ft.into())
     }
 
-    /// Create a new FT232H structure from a serial number.
+    /// Create a new FTxxx structure from a serial number.
     ///
     /// # Example
     ///
@@ -189,12 +201,12 @@ impl Ft232hHal<Uninitialized> {
     /// let ftdi = hal::Ft232hHal::with_serial_number("FT6ASGXH")?.init_default()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
-    pub fn with_serial_number(sn: &str) -> Result<Ft232hHal<Uninitialized>, DeviceTypeError> {
-        let ft: Ft232h = Ft232h::with_serial_number(sn)?;
+    pub fn with_serial_number(sn: &str) -> Result<FtHal<Device, Uninitialized>, DeviceTypeError> {
+        let ft: Device = Ftdi::with_serial_number(sn)?.try_into()?;
         Ok(ft.into())
     }
 
-    /// Open a `Ft4232h` device by its device description.
+    /// Open a `Ftxxx` device by its device description.
     ///
     /// # Example
     ///
@@ -206,8 +218,8 @@ impl Ft232hHal<Uninitialized> {
     /// ```
     pub fn with_description(
         description: &str,
-    ) -> Result<Ft232hHal<Uninitialized>, DeviceTypeError> {
-        let ft: Ft232h = Ft232h::with_description(description)?;
+    ) -> Result<FtHal<Device, Uninitialized>, DeviceTypeError> {
+        let ft: Device = Ftdi::with_description(description)?.try_into()?;
         Ok(ft.into())
     }
 
@@ -232,7 +244,7 @@ impl Ft232hHal<Uninitialized> {
     /// let ftdi: Ft232hHal<Initialized> = ftdi.init_default()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
-    pub fn init_default(self) -> Result<Ft232hHal<Initialized>, TimeoutError> {
+    pub fn init_default(self) -> Result<FtHal<Device, Initialized>, TimeoutError> {
         const DEFAULT: MpsseSettings = MpsseSettings {
             reset: true,
             in_transfer_size: 4096,
@@ -277,7 +289,7 @@ impl Ft232hHal<Uninitialized> {
     pub fn init(
         self,
         mpsse_settings: &MpsseSettings,
-    ) -> Result<Ft232hHal<Initialized>, TimeoutError> {
+    ) -> Result<FtHal<Device, Initialized>, TimeoutError> {
         {
             let lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
             let mut inner = lock.borrow_mut();
@@ -286,14 +298,14 @@ impl Ft232hHal<Uninitialized> {
             inner.ft.initialize_mpsse(&mpsse_settings)?;
         }
 
-        Ok(Ft232hHal {
+        Ok(FtHal {
             init: Initialized,
             mtx: self.mtx,
         })
     }
 }
 
-impl From<Ft232h> for Ft232hHal<Uninitialized> {
+impl<Device: FtdiCommon> From<Device> for FtHal<Device, Uninitialized> {
     /// Create a new FT232H structure from a specific FT232H device.
     ///
     /// # Examples
@@ -315,21 +327,21 @@ impl From<Ft232h> for Ft232hHal<Uninitialized> {
     /// ```no_run
     /// use ftd2xx_embedded_hal as hal;
     /// use hal::libftd2xx::Ft232h;
-    /// use hal::Ft232hHal;
+    /// use hal::FtHal;
     ///
     /// let ft = Ft232h::with_description("My device description")?;
-    /// let ftdi = Ft232hHal::from(ft).init_default()?;
+    /// let ftdi = FtHal::from(ft).init_default()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
-    fn from(ft: Ft232h) -> Self {
-        Ft232hHal {
+    fn from(ft: Device) -> Self {
+        FtHal {
             init: Uninitialized,
             mtx: Mutex::new(RefCell::new(ft.into())),
         }
     }
 }
 
-impl Ft232hHal<Initialized> {
+impl<Device: FtdiCommon> FtHal<Device, Initialized> {
     /// Aquire the SPI peripheral for the FT232H.
     ///
     /// Pin assignments:
@@ -350,7 +362,7 @@ impl Ft232hHal<Initialized> {
     /// let mut spi = ftdi.spi()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
-    pub fn spi(&self) -> Result<Spi, TimeoutError> {
+    pub fn spi(&self) -> Result<Spi<Device>, TimeoutError> {
         Spi::new(&self.mtx)
     }
 
@@ -377,7 +389,7 @@ impl Ft232hHal<Initialized> {
     /// let mut i2c = ftdi.i2c()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
-    pub fn i2c(&self) -> Result<I2c, TimeoutError> {
+    pub fn i2c(&self) -> Result<I2c<Device>, TimeoutError> {
         I2c::new(&self.mtx)
     }
 
@@ -386,7 +398,7 @@ impl Ft232hHal<Initialized> {
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad0(&self) -> OutputPin {
+    pub fn ad0(&self) -> OutputPin<Device> {
         OutputPin::new(&self.mtx, 0)
     }
 
@@ -395,7 +407,7 @@ impl Ft232hHal<Initialized> {
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad1(&self) -> OutputPin {
+    pub fn ad1(&self) -> OutputPin<Device> {
         OutputPin::new(&self.mtx, 1)
     }
 
@@ -404,7 +416,7 @@ impl Ft232hHal<Initialized> {
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad2(&self) -> OutputPin {
+    pub fn ad2(&self) -> OutputPin<Device> {
         OutputPin::new(&self.mtx, 2)
     }
 
@@ -413,7 +425,7 @@ impl Ft232hHal<Initialized> {
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad3(&self) -> OutputPin {
+    pub fn ad3(&self) -> OutputPin<Device> {
         OutputPin::new(&self.mtx, 3)
     }
 
@@ -422,7 +434,7 @@ impl Ft232hHal<Initialized> {
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad4(&self) -> OutputPin {
+    pub fn ad4(&self) -> OutputPin<Device> {
         OutputPin::new(&self.mtx, 4)
     }
 
@@ -431,7 +443,7 @@ impl Ft232hHal<Initialized> {
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad5(&self) -> OutputPin {
+    pub fn ad5(&self) -> OutputPin<Device> {
         OutputPin::new(&self.mtx, 5)
     }
 
@@ -440,7 +452,7 @@ impl Ft232hHal<Initialized> {
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad6(&self) -> OutputPin {
+    pub fn ad6(&self) -> OutputPin<Device> {
         OutputPin::new(&self.mtx, 6)
     }
 
@@ -449,7 +461,7 @@ impl Ft232hHal<Initialized> {
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad7(&self) -> OutputPin {
+    pub fn ad7(&self) -> OutputPin<Device> {
         OutputPin::new(&self.mtx, 7)
     }
 }

@@ -1,17 +1,17 @@
-use crate::{Ft232hInner, PinUse};
+use crate::{FtInner, PinUse};
 use embedded_hal::spi::Polarity;
 use libftd2xx::{ClockData, ClockDataOut, FtdiCommon, MpsseCmdBuilder, TimeoutError};
 use std::{cell::RefCell, sync::Mutex};
 
 /// FTDI SPI interface.
 ///
-/// This is created by calling [`Ft232hHal::spi`].
+/// This is created by calling [`FtHal::spi`].
 ///
-/// [`Ft232hHal::spi`]: crate::Ft232hHal::spi
+/// [`FtHal::spi`]: crate::FtHal::spi
 #[derive(Debug)]
-pub struct Spi<'a> {
+pub struct Spi<'a, Device> {
     /// Parent FTDI device.
-    mtx: &'a Mutex<RefCell<Ft232hInner>>,
+    mtx: &'a Mutex<RefCell<FtInner<Device>>>,
     /// MPSSE command used to clock data in and out simultaneously.
     ///
     /// This is set by [`Spi::set_clock_polarity`].
@@ -22,8 +22,8 @@ pub struct Spi<'a> {
     clk_out: ClockDataOut,
 }
 
-impl<'a> Spi<'a> {
-    pub(crate) fn new(mtx: &Mutex<RefCell<Ft232hInner>>) -> Result<Spi, TimeoutError> {
+impl<'a, Device: FtdiCommon> Spi<'a, Device> {
+    pub(crate) fn new(mtx: &Mutex<RefCell<FtInner<Device>>>) -> Result<Spi<Device>, TimeoutError> {
         let lock = mtx.lock().expect("Failed to aquire FTDI mutex");
         let mut inner = lock.borrow_mut();
         inner.allocate_pin(0, PinUse::Spi);
@@ -77,7 +77,7 @@ impl<'a> Spi<'a> {
     }
 }
 
-impl<'a> embedded_hal::blocking::spi::Write<u8> for Spi<'a> {
+impl<'a, Device: FtdiCommon> embedded_hal::blocking::spi::Write<u8> for Spi<'a, Device> {
     type Error = TimeoutError;
     fn write(&mut self, words: &[u8]) -> Result<(), Self::Error> {
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
@@ -90,7 +90,7 @@ impl<'a> embedded_hal::blocking::spi::Write<u8> for Spi<'a> {
     }
 }
 
-impl<'a> embedded_hal::blocking::spi::Transfer<u8> for Spi<'a> {
+impl<'a, Device: FtdiCommon> embedded_hal::blocking::spi::Transfer<u8> for Spi<'a, Device> {
     type Error = TimeoutError;
     fn transfer<'w>(&mut self, words: &'w mut [u8]) -> Result<&'w [u8], Self::Error> {
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
@@ -106,7 +106,7 @@ impl<'a> embedded_hal::blocking::spi::Transfer<u8> for Spi<'a> {
     }
 }
 
-impl<'a> embedded_hal::spi::FullDuplex<u8> for Spi<'a> {
+impl<'a, Device: FtdiCommon> embedded_hal::spi::FullDuplex<u8> for Spi<'a, Device> {
     type Error = TimeoutError;
 
     fn read(&mut self) -> nb::Result<u8, Self::Error> {
