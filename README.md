@@ -19,9 +19,29 @@ This is strictly a development tool.
 The crate contains runtime borrow checks and explicit panics to adapt the
 FTDI device into the [embedded-hal] traits.
 
-## Setup
+## One-time Setup
 
-One-time device setup instructions can be found in the [libftd2xx crate].
+Detailed setup instructions can be found in the [libftd2xx crate].
+
+### Linux Quickstart
+
+Use static linking (enable the "static" feature flag), and add [udev rules].
+
+```toml
+[dependencies.ftd2xx-embedded-hal]
+version = "~0.5.1"
+features = ["static"]
+```
+
+### Windows Quickstart
+
+Use dyanmic linking (no feature flags), and run the vendor
+[setup executable] to install the vendor library on your system.
+
+```toml
+[dependencies.ftd2xx-embedded-hal]
+version = "~0.5.1"
+```
 
 ## Examples
 
@@ -63,9 +83,11 @@ let mut gpio = ftdi.ad6();
 * Limited trait support: SPI, I2C, Delay, and OutputPin traits are implemented.
 * Limited device support: FT232H, FT4232H.
 
-[embedded-hal]: https://crates.io/crates/embedded-hal
+[embedded-hal]: https://github.com/rust-embedded/embedded-hal
 [ftdi-embedded-hal]: https://github.com/geomatsi/ftdi-embedded-hal
 [libftd2xx crate]: https://github.com/newAM/libftd2xx-rs/
 [libftd2xx]: https://github.com/newAM/libftd2xx-rs
 [newAM/eeprom25aa02e48-rs]: https://github.com/newAM/eeprom25aa02e48-rs/blob/main/examples/ftdi.rs
 [newAM/bme280-rs]: https://github.com/newAM/bme280-rs/blob/main/examples/ftdi.rs
+[udev rules]: https://github.com/newAM/libftd2xx-rs/#udev-rules
+[setup executable]: https://www.ftdichip.com/Drivers/CDM/CDM21228_Setup.zip
