@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Changed the default linking method on Linux to dynamic.
   Static linking can be enabled with the `static` feature flag.
+- Changed the I2C pins to input (tri-state) when in idle mode.
+
+### Fixed
+- Fixed AD0 (SCL) pulling low when when I2C is first initialized
+- Fixed I2C AD0 & AD1 (SCL & SDA out) being pulled low when another OutputPin
+  changed state
 
 ## [0.5.1] - 2021-03-20
 ### Fixed

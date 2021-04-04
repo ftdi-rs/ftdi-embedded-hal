@@ -34,13 +34,14 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
         inner.allocate_pin(1, PinUse::I2c);
         inner.allocate_pin(2, PinUse::I2c);
 
-        // clear direction of first 3 pins
+        // clear direction and value of first 3 pins
+
         inner.direction &= !0x07;
+        inner.value &= !0x07;
         // AD0: SCL
         // AD1: SDA (master out)
         // AD2: SDA (master in)
-        // set AD0 and AD1 as output pins
-        inner.direction |= 0x01;
+        // pins are set as input (tri-stated) in idle mode
 
         // set GPIO pins to new state
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
@@ -135,6 +136,9 @@ impl<'a, Device: FtdiCommon> embedded_hal::blocking::i2c::Read for I2c<'a, Devic
                 mpsse_cmd.set_gpio_lower(inner.value | SCL | SDA, SCL | SDA | inner.direction)
         }
 
+        // Idle
+        mpsse_cmd = mpsse_cmd.set_gpio_lower(inner.value, inner.direction);
+
         mpsse_cmd = mpsse_cmd.send_immediate();
 
         inner.ft.write_all(&mpsse_cmd.as_slice())?;
@@ -157,10 +161,10 @@ impl<'a, Device: FtdiCommon> embedded_hal::blocking::i2c::Write for I2c<'a, Devi
         // ST
         for _ in 0..self.start_stop_cmds {
             mpsse_cmd =
-                mpsse_cmd.set_gpio_lower(SCL | SDA | inner.value, SCL | SDA | inner.direction)
+                mpsse_cmd.set_gpio_lower(inner.value | SCL | SDA, SCL | SDA | inner.direction)
         }
         for _ in 0..self.start_stop_cmds {
-            mpsse_cmd = mpsse_cmd.set_gpio_lower(SCL | inner.value, SCL | SDA | inner.direction)
+            mpsse_cmd = mpsse_cmd.set_gpio_lower(inner.value | SCL, SCL | SDA | inner.direction)
         }
 
         mpsse_cmd = mpsse_cmd
@@ -192,6 +196,9 @@ impl<'a, Device: FtdiCommon> embedded_hal::blocking::i2c::Write for I2c<'a, Devi
             mpsse_cmd =
                 mpsse_cmd.set_gpio_lower(inner.value | SCL | SDA, SCL | SDA | inner.direction)
         }
+
+        // Idle
+        mpsse_cmd = mpsse_cmd.set_gpio_lower(inner.value, inner.direction);
 
         mpsse_cmd = mpsse_cmd.send_immediate();
 
@@ -294,6 +301,9 @@ impl<'a, Device: FtdiCommon> embedded_hal::blocking::i2c::WriteRead for I2c<'a, 
             mpsse_cmd =
                 mpsse_cmd.set_gpio_lower(inner.value | SCL | SDA, SCL | SDA | inner.direction)
         }
+
+        // Idle
+        mpsse_cmd = mpsse_cmd.set_gpio_lower(inner.value, inner.direction);
 
         mpsse_cmd = mpsse_cmd.send_immediate();
 
