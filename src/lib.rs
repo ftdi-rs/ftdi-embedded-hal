@@ -102,6 +102,7 @@ mod spi;
 pub use delay::Delay;
 pub use gpio::OutputPin;
 pub use i2c::I2c;
+use libftd2xx::Ft2232h;
 use libftd2xx::Ft232h;
 use libftd2xx::Ft4232h;
 use libftd2xx::FtdiCommon;
@@ -184,6 +185,9 @@ pub struct Uninitialized;
 
 /// FT232H device.
 pub type Ft232hHal<T> = FtHal<Ft232h, T>;
+
+/// FT2232H device.
+pub type Ft2232hHal<T> = FtHal<Ft2232h, T>;
 
 /// FT4232H device.
 pub type Ft4232hHal<T> = FtHal<Ft4232h, T>;
