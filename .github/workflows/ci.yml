@@ -3,8 +3,8 @@ on: [push, pull_request]
 name: CI
 
 jobs:
-  build_and_test:
-    name: Rust project
+  build:
+    name: Cargo Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -12,10 +12,28 @@ jobs:
         with:
           toolchain: stable
       - run: RUSTFLAGS="-D warnings" cargo build
-      - run: cargo test
-      - run: cargo doc
 
-  clippy_check:
+  test:
+    name: Cargo Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: RUSTFLAGS="-D warnings" cargo test
+
+  doc:
+    name: Cargo Doc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: RUSTFLAGS="-D warnings" cargo doc
+
+  clippy:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
@@ -29,8 +47,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features
 
-  format_check:
-    name: Rust Format
+  format:
+    name: Cargo Fmt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -43,7 +61,7 @@ jobs:
   release:
     name: crates.io release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build_and_test, clippy_check, format_check]
+    needs: [build, test, doc, clippy, format]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
