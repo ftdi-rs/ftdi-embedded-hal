@@ -20,10 +20,12 @@ fn main() {
     let mut buf: [u8; 1] = [0];
     const BME280_ADDR: u8 = 0b1110111;
     const BME280_CHIP_ID_ADDR: u8 = 0xD0;
+    println!("Reading chip ID from BME280");
     i2c.write_read(BME280_ADDR, &[BME280_CHIP_ID_ADDR], &mut buf)
         .expect("Failed to read from BME280");
 
     // ID register is constant
     const BME280_CHIP_ID: u8 = 0x60;
     assert_eq!(buf[0], BME280_CHIP_ID);
+    println!("Chip ID ok");
 }

@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2021-04-18
+### Added
+- Added checks for missing ACKs from the I2C slave.
+  Missing ACKs will now return an `NakError` from the I2C traits.
+
+### Changed
+- Changed the default implementation of I2C traits to wait for a slave ACK
+  before transmitting more bytes.  The previous behavior can be retained by
+  calling `set_fast(true)`.
+
 ## [0.6.0] - 2021-04-10
 ### Added
 - Added support for the FT4232H.
@@ -71,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2020-09-12
 - Initial release
 
-[Unreleased]: https://github.com/newAM/ftd2xx-embedded-hal/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/newAM/ftd2xx-embedded-hal/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/newAM/ftd2xx-embedded-hal/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/newAM/ftd2xx-embedded-hal/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/newAM/ftd2xx-embedded-hal/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/newAM/ftd2xx-embedded-hal/compare/v0.4.0...v0.5.0
