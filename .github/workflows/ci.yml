@@ -1,4 +1,12 @@
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+  schedule:
+    - cron: "3 3 * * *"
 
 name: CI
 
@@ -31,7 +39,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - run: RUSTFLAGS="-D warnings" cargo doc
+      - run: RUSTDOCFLAGS="-D warnings" cargo doc
 
   clippy:
     name: Clippy

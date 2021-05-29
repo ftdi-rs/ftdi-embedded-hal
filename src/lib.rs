@@ -22,7 +22,7 @@
 //!
 //! ```toml
 //! [dependencies.ftd2xx-embedded-hal]
-//! version = "~0.7.0"
+//! version = "~0.8.0"
 //! features = ["static"]
 //! ```
 //!
@@ -33,7 +33,7 @@
 //!
 //! ```toml
 //! [dependencies.ftd2xx-embedded-hal]
-//! version = "~0.7.0"
+//! version = "~0.8.0"
 //! ```
 //!
 //! # Examples
@@ -87,7 +87,7 @@
 //! [newAM/bme280-rs]: https://github.com/newAM/bme280-rs/blob/main/examples/ftdi.rs
 //! [udev rules]: https://github.com/newAM/libftd2xx-rs/#udev-rules
 //! [setup executable]: https://www.ftdichip.com/Drivers/CDM/CDM21228_Setup.zip
-#![doc(html_root_url = "https://docs.rs/ftd2xx-embedded-hal/0.7.0")]
+#![doc(html_root_url = "https://docs.rs/ftd2xx-embedded-hal/0.8.0")]
 #![forbid(missing_docs)]
 #![forbid(unsafe_code)]
 

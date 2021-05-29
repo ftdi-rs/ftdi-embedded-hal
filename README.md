@@ -29,7 +29,7 @@ Use static linking (enable the "static" feature flag), and add [udev rules].
 
 ```toml
 [dependencies.ftd2xx-embedded-hal]
-version = "~0.7.0"
+version = "~0.8.0"
 features = ["static"]
 ```
 
@@ -40,7 +40,7 @@ Use dyanmic linking (no feature flags), and run the vendor
 
 ```toml
 [dependencies.ftd2xx-embedded-hal]
-version = "~0.7.0"
+version = "~0.8.0"
 ```
 
 ## Examples
