@@ -12,28 +12,15 @@
 //! The crate contains runtime borrow checks and explicit panics to adapt the
 //! FTDI device into the [embedded-hal] traits.
 //!
-//! # One-time Setup
+//! # Quickstart
 //!
-//! Detailed setup instructions can be found in the [libftd2xx crate].
-//!
-//! ## Linux Quickstart
-//!
-//! Use static linking (enable the "static" feature flag), and add [udev rules].
+//! * Enable the "static" feature flag to use static linking.
+//! * Linux users only: Add [udev rules].
 //!
 //! ```toml
 //! [dependencies.ftd2xx-embedded-hal]
-//! version = "~0.8.0"
+//! version = "~0.9.0"
 //! features = ["static"]
-//! ```
-//!
-//! ## Windows Quickstart
-//!
-//! Use dyanmic linking (no feature flags), and run the vendor
-//! [setup executable] to install the vendor library on your system.
-//!
-//! ```toml
-//! [dependencies.ftd2xx-embedded-hal]
-//! version = "~0.8.0"
 //! ```
 //!
 //! # Examples
@@ -63,7 +50,7 @@
 //! # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
 //! ```
 //!
-//! # GPIO
+//! ## GPIO
 //!
 //! ```no_run
 //! use embedded_hal::prelude::*;
@@ -87,7 +74,7 @@
 //! [newAM/bme280-rs]: https://github.com/newAM/bme280-rs/blob/main/examples/ftdi.rs
 //! [udev rules]: https://github.com/newAM/libftd2xx-rs/#udev-rules
 //! [setup executable]: https://www.ftdichip.com/Drivers/CDM/CDM21228_Setup.zip
-#![doc(html_root_url = "https://docs.rs/ftd2xx-embedded-hal/0.8.0")]
+#![doc(html_root_url = "https://docs.rs/ftd2xx-embedded-hal/0.9.0")]
 #![forbid(missing_docs)]
 #![forbid(unsafe_code)]
 

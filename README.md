@@ -19,28 +19,15 @@ This is strictly a development tool.
 The crate contains runtime borrow checks and explicit panics to adapt the
 FTDI device into the [embedded-hal] traits.
 
-## One-time Setup
+## Quickstart
 
-Detailed setup instructions can be found in the [libftd2xx crate].
-
-### Linux Quickstart
-
-Use static linking (enable the "static" feature flag), and add [udev rules].
+* Enable the "static" feature flag to use static linking.
+* Linux users only: Add [udev rules].
 
 ```toml
 [dependencies.ftd2xx-embedded-hal]
-version = "~0.8.0"
+version = "~0.9.0"
 features = ["static"]
-```
-
-### Windows Quickstart
-
-Use dyanmic linking (no feature flags), and run the vendor
-[setup executable] to install the vendor library on your system.
-
-```toml
-[dependencies.ftd2xx-embedded-hal]
-version = "~0.8.0"
 ```
 
 ## Examples
@@ -68,7 +55,7 @@ let ftdi = Ft232hHal::new()?.init_default()?;
 let mut i2c = ftdi.i2c()?;
 ```
 
-## GPIO
+### GPIO
 
 ```rust
 use embedded_hal::prelude::*;
