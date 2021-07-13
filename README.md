@@ -74,7 +74,7 @@ let mut gpio = ftdi.ad6();
 [ftdi-embedded-hal]: https://github.com/geomatsi/ftdi-embedded-hal
 [libftd2xx crate]: https://github.com/newAM/libftd2xx-rs/
 [libftd2xx]: https://github.com/newAM/libftd2xx-rs
-[newAM/eeprom25aa02e48-rs]: https://github.com/newAM/eeprom25aa02e48-rs/blob/main/examples/ftdi.rs
+[newAM/eeprom25aa02e48-rs]: https://github.com/newAM/eeprom25aa02e48-rs/blob/main/examples
 [newAM/bme280-rs]: https://github.com/newAM/bme280-rs/blob/main/examples/ftdi.rs
 [udev rules]: https://github.com/newAM/libftd2xx-rs/#udev-rules
 [setup executable]: https://www.ftdichip.com/Drivers/CDM/CDM21228_Setup.zip
