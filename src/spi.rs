@@ -9,7 +9,7 @@ use std::{cell::RefCell, sync::Mutex};
 ///
 /// [`FtHal::spi`]: crate::FtHal::spi
 #[derive(Debug)]
-pub struct Spi<'a, Device> {
+pub struct Spi<'a, Device: FtdiCommon> {
     /// Parent FTDI device.
     mtx: &'a Mutex<RefCell<FtInner<Device>>>,
     /// MPSSE command used to clock data in and out simultaneously.

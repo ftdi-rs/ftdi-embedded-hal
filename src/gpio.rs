@@ -9,7 +9,7 @@ use std::{cell::RefCell, sync::Mutex};
 /// [`FtHal::ad0`]: crate::FtHal::ad0
 /// [`FtHal::ad7`]: crate::FtHal::ad7
 #[derive(Debug)]
-pub struct OutputPin<'a, Device> {
+pub struct OutputPin<'a, Device: FtdiCommon> {
     /// Parent FTDI device.
     mtx: &'a Mutex<RefCell<FtInner<Device>>>,
     /// GPIO pin index.  0-7 for the FT232H.
@@ -41,9 +41,9 @@ impl<'a, Device: FtdiCommon> OutputPin<'a, Device> {
     }
 }
 
-impl<'a, Device> OutputPin<'a, Device> {
+impl<'a, Device: FtdiCommon> OutputPin<'a, Device> {
     /// Convert the GPIO pin index to a pin mask
-    pub(crate) const fn mask(&self) -> u8 {
+    pub(crate) fn mask(&self) -> u8 {
         1 << self.idx
     }
 }

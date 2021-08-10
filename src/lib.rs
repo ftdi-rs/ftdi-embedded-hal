@@ -96,6 +96,7 @@ use libftd2xx::{
     TimeoutError,
 };
 use std::convert::TryFrom;
+use std::ops::Drop;
 use std::{cell::RefCell, convert::TryInto, sync::Mutex, time::Duration};
 
 /// State tracker for each pin on the FTDI chip.
@@ -117,7 +118,7 @@ impl std::fmt::Display for PinUse {
 }
 
 #[derive(Debug)]
-struct FtInner<Device> {
+struct FtInner<Device: FtdiCommon> {
     /// FTDI device.
     ft: Device,
     /// GPIO direction.
@@ -126,6 +127,12 @@ struct FtInner<Device> {
     value: u8,
     /// Pin allocation.
     pins: [Option<PinUse>; 8],
+}
+
+impl<Device: FtdiCommon> Drop for FtInner<Device> {
+    fn drop(&mut self) {
+        self.ft.close().ok();
+    }
 }
 
 impl<Device: FtdiCommon> FtInner<Device> {
@@ -180,7 +187,7 @@ pub type Ft4232hHal<T> = FtHal<Ft4232h, T>;
 
 /// FTxxx device.
 #[derive(Debug)]
-pub struct FtHal<Device, INITIALIZED> {
+pub struct FtHal<Device: FtdiCommon, INITIALIZED> {
     #[allow(dead_code)]
     init: INITIALIZED,
     mtx: Mutex<RefCell<FtInner<Device>>>,

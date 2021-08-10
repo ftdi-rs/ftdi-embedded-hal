@@ -42,7 +42,7 @@ impl Error for I2cError {}
 ///
 /// [`FtHal::i2c`]: crate::FtHal::i2c
 #[derive(Debug)]
-pub struct I2c<'a, Device> {
+pub struct I2c<'a, Device: FtdiCommon> {
     /// Parent FTDI device.
     mtx: &'a Mutex<RefCell<FtInner<Device>>>,
     /// Length of the start, repeated start, and stop conditions.
