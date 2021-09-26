@@ -1,5 +1,5 @@
 [package]
-name = "ftd2xx-embedded-hal"
+name = "ftdi-embedded-hal"
 version = "0.9.1"
 authors = ["Alex M. <alexmgit@protonmail.com>"]
 description = "embedded-hal implementation for FTDI USB devices."
@@ -7,8 +7,8 @@ keywords = ["ftdi", "usb", "io", "hal"]
 categories = ["embedded"]
 edition = "2018"
 license = "MIT"
-repository = "https://github.com/newAM/ftd2xx-embedded-hal/"
-documentation = "https://docs.rs/ftd2xx-embedded-hal"
+repository = "https://github.com/ftdi-rs/ftdi-embedded-hal/"
+documentation = "https://docs.rs/ftdi-embedded-hal"
 readme = "README.md"
 
 [features]

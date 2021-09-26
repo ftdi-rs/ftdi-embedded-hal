@@ -96,7 +96,7 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
     /// # Example
     ///
     /// ```no_run
-    /// use ftd2xx_embedded_hal as hal;
+    /// use ftdi_embedded_hal as hal;
     ///
     /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
     /// let mut i2c = ftdi.i2c()?;
@@ -120,7 +120,7 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
     /// # Example
     ///
     /// ```no_run
-    /// use ftd2xx_embedded_hal as hal;
+    /// use ftdi_embedded_hal as hal;
     ///
     /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
     /// let mut i2c = ftdi.i2c()?;
