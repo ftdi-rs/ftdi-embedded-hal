@@ -16,7 +16,7 @@ impl Delay {
     /// # Example
     ///
     /// ```
-    /// use ftd2xx_embedded_hal::Delay;
+    /// use ftdi_embedded_hal::Delay;
     ///
     /// let mut my_delay: Delay = Delay::new();
     /// ```

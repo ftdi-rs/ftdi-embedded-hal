@@ -8,7 +8,7 @@
 //! * https://www.adafruit.com/product/4472
 
 use embedded_hal::prelude::*;
-use ftd2xx_embedded_hal as hal;
+use ftdi_embedded_hal as hal;
 
 fn main() {
     let ftdi = hal::Ft232hHal::new()

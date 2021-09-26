@@ -1,5 +1,5 @@
 use embedded_hal::digital::v2::OutputPin;
-use ftd2xx_embedded_hal as hal;
+use ftdi_embedded_hal as hal;
 use std::{thread::sleep, time::Duration};
 
 const NUM_BLINK: usize = 10;

@@ -18,7 +18,7 @@
 //! * Linux users only: Add [udev rules].
 //!
 //! ```toml
-//! [dependencies.ftd2xx-embedded-hal]
+//! [dependencies.ftdi-embedded-hal]
 //! version = "~0.9.1"
 //! features = ["static"]
 //! ```
@@ -32,7 +32,7 @@
 //!
 //! ```no_run
 //! use embedded_hal::prelude::*;
-//! use ftd2xx_embedded_hal::Ft232hHal;
+//! use ftdi_embedded_hal::Ft232hHal;
 //!
 //! let ftdi = Ft232hHal::new()?.init_default()?;
 //! let mut spi = ftdi.spi()?;
@@ -43,7 +43,7 @@
 //!
 //! ```no_run
 //! use embedded_hal::prelude::*;
-//! use ftd2xx_embedded_hal::Ft232hHal;
+//! use ftdi_embedded_hal::Ft232hHal;
 //!
 //! let ftdi = Ft232hHal::new()?.init_default()?;
 //! let mut i2c = ftdi.i2c()?;
@@ -54,7 +54,7 @@
 //!
 //! ```no_run
 //! use embedded_hal::prelude::*;
-//! use ftd2xx_embedded_hal::Ft232hHal;
+//! use ftdi_embedded_hal::Ft232hHal;
 //!
 //! let ftdi = Ft232hHal::new()?.init_default()?;
 //! let mut gpio = ftdi.ad6();
@@ -67,14 +67,14 @@
 //! * Limited device support: FT232H, FT2232H, FT4232H.
 //!
 //! [embedded-hal]: https://github.com/rust-embedded/embedded-hal
-//! [ftdi-embedded-hal]: https://github.com/geomatsi/ftdi-embedded-hal
-//! [libftd2xx crate]: https://github.com/newAM/libftd2xx-rs/
-//! [libftd2xx]: https://github.com/newAM/libftd2xx-rs
+//! [ftdi-embedded-hal-archive]: https://github.com/geomatsi/ftdi-embedded-hal-archive
+//! [libftd2xx crate]: https://github.com/ftdi-rs/libftd2xx-rs/
+//! [libftd2xx]: https://github.com/ftdi-rs/libftd2xx-rs
 //! [newAM/eeprom25aa02e48-rs]: https://github.com/newAM/eeprom25aa02e48-rs/blob/main/examples/ftdi.rs
 //! [newAM/bme280-rs]: https://github.com/newAM/bme280-rs/blob/main/examples/ftdi.rs
-//! [udev rules]: https://github.com/newAM/libftd2xx-rs/#udev-rules
+//! [udev rules]: https://github.com/ftdi-rs/libftd2xx-rs/#udev-rules
 //! [setup executable]: https://www.ftdichip.com/Drivers/CDM/CDM21228_Setup.zip
-#![doc(html_root_url = "https://docs.rs/ftd2xx-embedded-hal/0.9.1")]
+#![doc(html_root_url = "https://docs.rs/ftdi-embedded-hal/0.9.1")]
 #![forbid(missing_docs)]
 #![forbid(unsafe_code)]
 
@@ -201,7 +201,7 @@ impl<Device: FtdiCommon + TryFrom<Ftdi, Error = DeviceTypeError> + FtdiMpsse>
     /// # Example
     ///
     /// ```no_run
-    /// use ftd2xx_embedded_hal as hal;
+    /// use ftdi_embedded_hal as hal;
     ///
     /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
@@ -216,7 +216,7 @@ impl<Device: FtdiCommon + TryFrom<Ftdi, Error = DeviceTypeError> + FtdiMpsse>
     /// # Example
     ///
     /// ```no_run
-    /// use ftd2xx_embedded_hal as hal;
+    /// use ftdi_embedded_hal as hal;
     ///
     /// let ftdi = hal::Ft232hHal::with_serial_number("FT6ASGXH")?.init_default()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
@@ -257,7 +257,7 @@ impl<Device: FtdiCommon + TryFrom<Ftdi, Error = DeviceTypeError> + FtdiMpsse>
     /// # Example
     ///
     /// ```no_run
-    /// use ftd2xx_embedded_hal as hal;
+    /// use ftdi_embedded_hal as hal;
     /// use hal::{Ft232hHal, Initialized, Uninitialized};
     ///
     /// let ftdi: Ft232hHal<Uninitialized> = hal::Ft232hHal::new()?;
@@ -292,7 +292,7 @@ impl<Device: FtdiCommon + TryFrom<Ftdi, Error = DeviceTypeError> + FtdiMpsse>
     /// # Example
     ///
     /// ```no_run
-    /// use ftd2xx_embedded_hal as hal;
+    /// use ftdi_embedded_hal as hal;
     /// use hal::libftd2xx::MpsseSettings;
     /// use hal::{Ft232hHal, Initialized, Uninitialized};
     ///
@@ -333,7 +333,7 @@ impl<Device: FtdiCommon> From<Device> for FtHal<Device, Uninitialized> {
     /// Selecting a device with a specific serial number.
     ///
     /// ```no_run
-    /// use ftd2xx_embedded_hal as hal;
+    /// use ftdi_embedded_hal as hal;
     /// use hal::libftd2xx::Ft232h;
     /// use hal::Ft232hHal;
     ///
@@ -345,7 +345,7 @@ impl<Device: FtdiCommon> From<Device> for FtHal<Device, Uninitialized> {
     /// Selecting a device with a specific description.
     ///
     /// ```no_run
-    /// use ftd2xx_embedded_hal as hal;
+    /// use ftdi_embedded_hal as hal;
     /// use hal::libftd2xx::Ft232h;
     /// use hal::FtHal;
     ///
@@ -376,7 +376,7 @@ impl<Device: FtdiCommon> FtHal<Device, Initialized> {
     /// # Example
     ///
     /// ```no_run
-    /// use ftd2xx_embedded_hal as hal;
+    /// use ftdi_embedded_hal as hal;
     ///
     /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
     /// let mut spi = ftdi.spi()?;
@@ -403,7 +403,7 @@ impl<Device: FtdiCommon> FtHal<Device, Initialized> {
     /// # Example
     ///
     /// ```no_run
-    /// use ftd2xx_embedded_hal as hal;
+    /// use ftdi_embedded_hal as hal;
     ///
     /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
     /// let mut i2c = ftdi.i2c()?;

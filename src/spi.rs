@@ -56,7 +56,7 @@ impl<'a, Device: FtdiCommon> Spi<'a, Device> {
     ///
     /// ```no_run
     /// use embedded_hal::spi::Polarity;
-    /// use ftd2xx_embedded_hal as hal;
+    /// use ftdi_embedded_hal as hal;
     ///
     /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
     /// let mut spi = ftdi.spi()?;
