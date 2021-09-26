@@ -1,2 +1,7 @@
 /target
 Cargo.lock
+
+# ide files
+rusty-tags.vi
+.idea
+.vscode
