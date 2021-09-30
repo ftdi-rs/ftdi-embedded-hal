@@ -82,16 +82,18 @@ pub use embedded_hal;
 pub use ftdi_mpsse;
 
 mod delay;
+mod error;
 mod gpio;
 mod i2c;
 mod spi;
 
+use crate::error::Error;
 pub use delay::Delay;
 pub use gpio::OutputPin;
-pub use i2c::{I2c, I2cError};
+pub use i2c::I2c;
 pub use spi::Spi;
 
-use ftdi_mpsse::{MpsseSettings, MpsseCmdExecutor};
+use ftdi_mpsse::{MpsseCmdExecutor, MpsseSettings};
 use std::{cell::RefCell, sync::Mutex};
 
 /// State tracker for each pin on the FTDI chip.
@@ -157,7 +159,11 @@ pub struct FtHal<Device: MpsseCmdExecutor> {
     mtx: Mutex<RefCell<FtInner<Device>>>,
 }
 
-impl<Device: MpsseCmdExecutor> FtHal<Device>
+impl<Device, E> FtHal<Device>
+where
+    Device: MpsseCmdExecutor<Error = E>,
+    E: std::error::Error,
+    Error<E>: From<E>,
 {
     /// Initialize the FTDI MPSSE with sane defaults.
     ///
@@ -180,16 +186,17 @@ impl<Device: MpsseCmdExecutor> FtHal<Device>
     /// let ftdi: Ft232hHal<Initialized> = ftdi.init_default()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
-    pub fn init_default(device: Device) -> Result<FtHal<Device>> {
-        FtHal::init(device, &MpsseSettings::default())
+    pub fn init_default(device: Device) -> Result<FtHal<Device>, Error<E>> {
+        Ok(FtHal::init(device, &MpsseSettings::default())?)
     }
-    pub fn init_basic(device: Device, freq: u32) -> Result<FtHal<Device>> {
+
+    pub fn init_basic(device: Device, freq: u32) -> Result<FtHal<Device>, Error<E>> {
         let settings: MpsseSettings = MpsseSettings {
             clock_frequency: Some(freq),
             ..Default::default()
         };
 
-        FtHal::init(device, &settings)
+        Ok(FtHal::init(device, &settings)?)
     }
 
     /// Initialize the FTDI MPSSE with custom values.
@@ -220,21 +227,21 @@ impl<Device: MpsseCmdExecutor> FtHal<Device>
     /// ```
     ///
     /// [`MpsseSettings`]: libftd2xx::MpsseSettings
-    pub fn init(
-        mut device: Device,
-        mpsse_settings: &MpsseSettings,
-    ) -> Result<FtHal<Device>> {
+    pub fn init(mut device: Device, mpsse_settings: &MpsseSettings) -> Result<FtHal<Device>, E> {
         device.init(mpsse_settings)?;
 
         Ok(FtHal {
-            mtx: Mutex::new(RefCell::new(device.into()))
+            mtx: Mutex::new(RefCell::new(device.into())),
         })
     }
 }
 
-impl<Device: MpsseCmdExecutor> FtHal<Device>
+impl<Device, E> FtHal<Device>
+where
+    Device: MpsseCmdExecutor<Error = E>,
+    E: std::error::Error,
+    Error<E>: From<E>,
 {
-
     /// Aquire the SPI peripheral for the FT232H.
     ///
     /// Pin assignments:
@@ -255,7 +262,7 @@ impl<Device: MpsseCmdExecutor> FtHal<Device>
     /// let mut spi = ftdi.spi()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
-    pub fn spi(&self) -> Result<Spi<Device>, TimeoutError> {
+    pub fn spi(&self) -> Result<Spi<Device>, Error<E>> {
         Spi::new(&self.mtx)
     }
 
@@ -282,7 +289,7 @@ impl<Device: MpsseCmdExecutor> FtHal<Device>
     /// let mut i2c = ftdi.i2c()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
-    pub fn i2c(&self) -> Result<I2c<Device>, TimeoutError> {
+    pub fn i2c(&self) -> Result<I2c<Device>, Error<E>> {
         I2c::new(&self.mtx)
     }
 
