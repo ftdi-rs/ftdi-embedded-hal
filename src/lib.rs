@@ -1,11 +1,10 @@
-//! Inspired by [ftdi-embedded-hal] this is an [embedded-hal] implementation
-//! for the for the FTDI chips using the [libftd2xx] drivers.
+//! This is an [embedded-hal] implementation for the FTDI chips
+//! that can use various drivers including [libftd2xx] and [ftdi-rs].
 //!
-//! This enables development of embedded device drivers without the use of a
-//! microcontroller.
-//! The FTDI D2xx devices interface with your PC via USB, and provide a
-//! multi-protocol synchronous serial engine to interface with most UART, SPI,
-//! and I2C embedded devices.
+//! This enables development of embedded device drivers without the use of
+//! a microcontroller. The FTDI devices interface with PC via USB, and
+//! provide a multi-protocol synchronous serial engine to interface
+//! with most GPIO, SPI, I2C embedded devices.
 //!
 //! **Note:**
 //! This is strictly a development tool.
@@ -14,13 +13,13 @@
 //!
 //! # Quickstart
 //!
-//! * Enable the "static" feature flag to use static linking.
+//! * Enable the "libftd2xx-static" feature flag to use static linking with libftd2xx driver.
 //! * Linux users only: Add [udev rules].
 //!
 //! ```toml
 //! [dependencies.ftdi-embedded-hal]
 //! version = "~0.9.1"
-//! features = ["static"]
+//! features = ["libftd2xx-static"]
 //! ```
 //!
 //! # Examples
@@ -30,34 +29,97 @@
 //!
 //! ## SPI
 //!
+//! Communicate with SPI devices using [ftdi-rs] driver:
 //! ```no_run
-//! use embedded_hal::prelude::*;
-//! use ftdi_embedded_hal::Ft232hHal;
+//! use ftdi_embedded_hal as hal;
 //!
-//! let ftdi = Ft232hHal::new()?.init_default()?;
-//! let mut spi = ftdi.spi()?;
+//! # #[cfg(feature = "ftdi")]
+//! # {
+//! let device = ftdi::find_by_vid_pid(0x0403, 0x6010)
+//!     .interface(ftdi::Interface::A)
+//!     .open()?;
+//!
+//! let hal = hal::FtHal::init_freq(device, 3_000_000)?;
+//! let spi = hal.spi()?;
+//! # }
+//! # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
+//! ```
+//!
+//! Communicate with SPI devices using [libftd2xx] driver:
+//! ```no_run
+//! use ftdi_embedded_hal as hal;
+//!
+//! # #[cfg(feature = "libftd2xx")]
+//! # {
+//! let device = libftd2xx::Ft2232h::with_description("Dual RS232-HS A")?;
+//!
+//! let hal = hal::FtHal::init_freq(device, 3_000_000)?;
+//! let spi = hal.spi()?;
+//! # }
 //! # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! ## I2C
 //!
+//! Communicate with I2C devices using [ftdi-rs] driver:
 //! ```no_run
-//! use embedded_hal::prelude::*;
-//! use ftdi_embedded_hal::Ft232hHal;
+//! use ftdi_embedded_hal as hal;
 //!
-//! let ftdi = Ft232hHal::new()?.init_default()?;
-//! let mut i2c = ftdi.i2c()?;
+//! # #[cfg(feature = "ftdi")]
+//! # {
+//! let device = ftdi::find_by_vid_pid(0x0403, 0x6010)
+//!     .interface(ftdi::Interface::A)
+//!     .open()?;
+//!
+//! let hal = hal::FtHal::init_freq(device, 400_000)?;
+//! let i2c = hal.i2c()?;
+//! # }
+//! # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
+//! ```
+//!
+//! Communicate with I2C devices using [libftd2xx] driver:
+//! ```no_run
+//! use ftdi_embedded_hal as hal;
+//!
+//! # #[cfg(feature = "libftd2xx")]
+//! # {
+//! let device = libftd2xx::Ft232h::with_description("Single RS232-HS")?;
+//!
+//! let hal = hal::FtHal::init_freq(device, 400_000)?;
+//! let i2c = hal.i2c()?;
+//! # }
 //! # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! ## GPIO
 //!
+//! Control GPIO pins using [libftd2xx] driver:
 //! ```no_run
-//! use embedded_hal::prelude::*;
-//! use ftdi_embedded_hal::Ft232hHal;
+//! use ftdi_embedded_hal as hal;
 //!
-//! let ftdi = Ft232hHal::new()?.init_default()?;
-//! let mut gpio = ftdi.ad6();
+//! # #[cfg(feature = "libftd2xx")]
+//! # {
+//! let device = libftd2xx::Ft232h::with_description("Single RS232-HS")?;
+//!
+//! let hal = hal::FtHal::init_default(device)?;
+//! let gpio = hal.ad6();
+//! # }
+//! # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
+//! ```
+//!
+//! Control GPIO pins using [ftdi-rs] driver:
+//! ```no_run
+//! use ftdi_embedded_hal as hal;
+//!
+//! # #[cfg(feature = "ftdi")]
+//! # {
+//! let device = ftdi::find_by_vid_pid(0x0403, 0x6010)
+//!     .interface(ftdi::Interface::A)
+//!     .open()?;
+//!
+//! let hal = hal::FtHal::init_default(device)?;
+//! let gpio = hal.ad6();
+//! # }
 //! # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
 //! ```
 //!
@@ -65,9 +127,10 @@
 //!
 //! * Limited trait support: SPI, I2C, Delay, and OutputPin traits are implemented.
 //! * Limited device support: FT232H, FT2232H, FT4232H.
+//! * Limited SPI modes support: MODE0, MODE2.
 //!
 //! [embedded-hal]: https://github.com/rust-embedded/embedded-hal
-//! [ftdi-embedded-hal-archive]: https://github.com/geomatsi/ftdi-embedded-hal-archive
+//! [ftdi-rs]: https://github.com/tanriol/ftdi-rs
 //! [libftd2xx crate]: https://github.com/ftdi-rs/libftd2xx-rs/
 //! [libftd2xx]: https://github.com/ftdi-rs/libftd2xx-rs
 //! [newAM/eeprom25aa02e48-rs]: https://github.com/newAM/eeprom25aa02e48-rs/blob/main/examples/ftdi.rs
@@ -180,10 +243,12 @@ where
     ///
     /// ```no_run
     /// use ftdi_embedded_hal as hal;
-    /// use hal::{Ft232hHal, Initialized, Uninitialized};
     ///
-    /// let ftdi: Ft232hHal<Uninitialized> = hal::Ft232hHal::new()?;
-    /// let ftdi: Ft232hHal<Initialized> = ftdi.init_default()?;
+    /// # #[cfg(feature = "libftd2xx")]
+    /// # {
+    /// let device = libftd2xx::Ft232h::with_description("Single RS232-HS")?;
+    /// let hal = hal::FtHal::init_default(device)?;
+    /// # }
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
     pub fn init_default(device: Device) -> Result<FtHal<Device>, Error<E>> {
@@ -195,6 +260,20 @@ where
         Ok(FtHal::init(device, &settings)?)
     }
 
+    /// Initialize the FTDI MPSSE with sane defaults and custom frequency
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use ftdi_embedded_hal as hal;
+    ///
+    /// # #[cfg(feature = "libftd2xx")]
+    /// # {
+    /// let device = libftd2xx::Ft232h::with_description("Single RS232-HS")?;
+    /// let hal = hal::FtHal::init_freq(device, 3_000_000)?;
+    /// # }
+    /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
+    /// ```
     pub fn init_freq(device: Device, freq: u32) -> Result<FtHal<Device>, Error<E>> {
         let settings: MpsseSettings = MpsseSettings {
             clock_frequency: Some(freq),
@@ -219,19 +298,28 @@ where
     ///
     /// ```no_run
     /// use ftdi_embedded_hal as hal;
-    /// use hal::libftd2xx::MpsseSettings;
-    /// use hal::{Ft232hHal, Initialized, Uninitialized};
+    /// use ftdi_mpsse::MpsseSettings;
+    /// use std::time::Duration;
     ///
-    /// let ftdi: Ft232hHal<Uninitialized> = hal::Ft232hHal::new()?;
-    /// let ftdi: Ft232hHal<Initialized> = ftdi.init(&MpsseSettings {
-    ///     clock_frequency: Some(500_000),
-    ///     ..MpsseSettings::default()
-    /// })?;
+    /// let mpsse = MpsseSettings {
+    ///     reset: false,
+    ///     in_transfer_size: 4096,
+    ///     read_timeout: Duration::from_secs(5),
+    ///     write_timeout: Duration::from_secs(5),
+    ///     latency_timer: Duration::from_millis(32),
+    ///     mask: 0x00,
+    ///     clock_frequency: Some(400_000),
+    /// };
     ///
+    /// # #[cfg(feature = "libftd2xx")]
+    /// # {
+    /// let device = libftd2xx::Ft232h::with_description("Single RS232-HS")?;
+    /// let hal = hal::FtHal::init(device, &mpsse)?;
+    /// # }
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
     ///
-    /// [`MpsseSettings`]: libftd2xx::MpsseSettings
+    /// [`MpsseSettings`]: ftdi_mpsse::MpsseSettings
     pub fn init(mut device: Device, mpsse_settings: &MpsseSettings) -> Result<FtHal<Device>, E> {
         device.init(mpsse_settings)?;
 
@@ -263,8 +351,12 @@ where
     /// ```no_run
     /// use ftdi_embedded_hal as hal;
     ///
-    /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
-    /// let mut spi = ftdi.spi()?;
+    /// # #[cfg(feature = "libftd2xx")]
+    /// # {
+    /// let device = libftd2xx::Ft2232h::with_description("Dual RS232-HS A")?;
+    /// let hal = hal::FtHal::init_freq(device, 3_000_000)?;
+    /// let spi = hal.spi()?;
+    /// # }
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
     pub fn spi(&self) -> Result<Spi<Device>, Error<E>> {
@@ -290,8 +382,12 @@ where
     /// ```no_run
     /// use ftdi_embedded_hal as hal;
     ///
-    /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
-    /// let mut i2c = ftdi.i2c()?;
+    /// # #[cfg(feature = "libftd2xx")]
+    /// # {
+    /// let device = libftd2xx::Ft2232h::with_description("Dual RS232-HS A")?;
+    /// let hal = hal::FtHal::init_freq(device, 3_000_000)?;
+    /// let i2c = hal.i2c()?;
+    /// # }
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
     pub fn i2c(&self) -> Result<I2c<Device>, Error<E>> {

@@ -65,9 +65,13 @@ where
     /// use embedded_hal::spi::Polarity;
     /// use ftdi_embedded_hal as hal;
     ///
-    /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
-    /// let mut spi = ftdi.spi()?;
+    /// # #[cfg(feature = "libftd2xx")]
+    /// # {
+    /// let device = libftd2xx::Ft2232h::with_description("Dual RS232-HS A")?;
+    /// let hal = hal::FtHal::init_freq(device, 3_000_000)?;
+    /// let mut spi = hal.spi()?;
     /// spi.set_clock_polarity(Polarity::IdleLow);
+    /// # }
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
     ///

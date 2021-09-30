@@ -5,14 +5,13 @@
 
 # ftdi-embedded-hal
 
-Inspired by [ftdi-embedded-hal] this is an [embedded-hal] implementation
-for the for the FTDI chips using the [libftd2xx] drivers.
+This is an [embedded-hal] implementation for the FTDI chips
+that can use various drivers including [libftd2xx] and [ftdi-rs].
 
-This enables development of embedded device drivers without the use of a
-microcontroller.
-The FTDI D2xx devices interface with your PC via USB, and provide a
-multi-protocol synchronous serial engine to interface with most UART, SPI,
-and I2C embedded devices.
+This enables development of embedded device drivers without the use of
+a microcontroller. The FTDI devices interface with PC via USB, and
+provide a multi-protocol synchronous serial engine to interface
+with most GPIO, SPI, I2C embedded devices.
 
 **Note:**
 This is strictly a development tool.
@@ -21,60 +20,108 @@ FTDI device into the [embedded-hal] traits.
 
 ## Quickstart
 
-* Enable the "static" feature flag to use static linking.
+* Enable the "libftd2xx-static" feature flag to use static linking with libftd2xx driver.
 * Linux users only: Add [udev rules].
 
 ```toml
 [dependencies.ftdi-embedded-hal]
 version = "~0.9.1"
-features = ["static"]
-```
-
-## Examples
-
-* [newAM/eeprom25aa02e48-rs]
-* [newAM/bme280-rs]
-
-### SPI
-
-```rust
-use embedded_hal::prelude::*;
-use ftdi_embedded_hal::Ft232hHal;
-
-let ftdi = Ft232hHal::new()?.init_default()?;
-let mut spi = ftdi.spi()?;
-```
-
-### I2C
-
-```rust
-use embedded_hal::prelude::*;
-use ftdi_embedded_hal::Ft232hHal;
-
-let ftdi = Ft232hHal::new()?.init_default()?;
-let mut i2c = ftdi.i2c()?;
-```
-
-### GPIO
-
-```rust
-use embedded_hal::prelude::*;
-use ftdi_embedded_hal::Ft232hHal;
-
-let ftdi = Ft232hHal::new()?.init_default()?;
-let mut gpio = ftdi.ad6();
+features = ["libftd2xx-static"]
 ```
 
 ## Limitations
 
 * Limited trait support: SPI, I2C, Delay, and OutputPin traits are implemented.
 * Limited device support: FT232H, FT2232H, FT4232H.
+* Limited SPI modes support: MODE0, MODE2.
+
+## Examples
+
+### SPI
+
+Communicate with SPI devices using [ftdi-rs] driver:
+```rust
+use ftdi_embedded_hal as hal;
+
+let device = ftdi::find_by_vid_pid(0x0403, 0x6010)
+    .interface(ftdi::Interface::A)
+    .open()
+    .unwrap();
+
+let hal = hal::FtHal::init_freq(device, 3_000_000).unwrap();
+let spi = hal.spi().unwrap();
+```
+
+Communicate with SPI devices using [libftd2xx] driver:
+```rust
+use ftdi_embedded_hal as hal;
+
+let device = libftd2xx::Ft2232h::with_description("Dual RS232-HS A").unwrap();
+
+let hal = hal::FtHal::init_freq(device, 3_000_000).unwrap();
+let spi = hal.spi().unwrap();
+```
+
+### I2C
+
+Communicate with I2C devices using [ftdi-rs] driver:
+```rust
+use ftdi_embedded_hal as hal;
+
+let device = ftdi::find_by_vid_pid(0x0403, 0x6010)
+    .interface(ftdi::Interface::A)
+    .open()
+    .unwrap();
+
+let hal = hal::FtHal::init_freq(device, 400_000).unwrap();
+let i2c = hal.i2c().unwrap();
+```
+
+Communicate with I2C devices using [libftd2xx] driver:
+```rust
+use ftdi_embedded_hal as hal;
+
+let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
+
+let hal = hal::FtHal::init_freq(device, 400_000).unwrap();
+let i2c = hal.i2c().unwrap();
+```
+
+### GPIO
+
+Control GPIO pins using [libftd2xx] driver:
+```rust
+use ftdi_embedded_hal as hal;
+
+let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
+
+let hal = hal::FtHal::init_default(device).unwrap();
+let gpio = hal.ad6();
+```
+
+Control GPIO pins using [ftdi-rs] driver:
+```rust
+use ftdi_embedded_hal as hal;
+
+let device = ftdi::find_by_vid_pid(0x0403, 0x6010)
+    .interface(ftdi::Interface::A)
+    .open()
+    .unwrap();
+
+let hal = hal::FtHal::init_default(device).unwrap();
+let gpio = hal.ad6();
+```
+
+### More examples
+
+* [newAM/eeprom25aa02e48-rs]: read data from Microchip 25AA02E48 SPI EEPROM
+* [newAM/bme280-rs]: read samples from Bosch BME280 sensor via I2C protocol
 
 [embedded-hal]: https://github.com/rust-embedded/embedded-hal
-[ftdi-embedded-hal-archive]: https://github.com/geomatsi/ftdi-embedded-hal-archive
+[ftdi-rs]: https://github.com/tanriol/ftdi-rs
 [libftd2xx crate]: https://github.com/ftdi-rs/libftd2xx-rs/
 [libftd2xx]: https://github.com/ftdi-rs/libftd2xx-rs
 [newAM/eeprom25aa02e48-rs]: https://github.com/newAM/eeprom25aa02e48-rs/blob/main/examples/ftdi.rs
-[newAM/bme280-rs]: https://github.com/newAM/bme280-rs/blob/main/examples/ftdi.rs
+[newAM/bme280-rs]: https://github.com/newAM/bme280-rs/blob/main/examples/ftdi-i2c.rs
 [udev rules]: https://github.com/ftdi-rs/libftd2xx-rs/#udev-rules
 [setup executable]: https://www.ftdichip.com/Drivers/CDM/CDM21228_Setup.zip
