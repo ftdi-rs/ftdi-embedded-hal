@@ -80,9 +80,13 @@ where
     /// ```no_run
     /// use ftdi_embedded_hal as hal;
     ///
-    /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
-    /// let mut i2c = ftdi.i2c()?;
+    /// # #[cfg(feature = "libftd2xx")]
+    /// # {
+    /// let device = libftd2xx::Ft2232h::with_description("Dual RS232-HS A")?;
+    /// let hal = hal::FtHal::init_freq(device, 3_000_000)?;
+    /// let mut i2c = hal.i2c()?;
     /// i2c.set_stop_start_len(10);
+    /// # }
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
     pub fn set_stop_start_len(&mut self, start_stop_cmds: u8) {
@@ -104,9 +108,16 @@ where
     /// ```no_run
     /// use ftdi_embedded_hal as hal;
     ///
-    /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
-    /// let mut i2c = ftdi.i2c()?;
+    /// # #[cfg(feature = "ftdi")]
+    /// # {
+    /// let device = ftdi::find_by_vid_pid(0x0403, 0x6014)
+    ///     .interface(ftdi::Interface::A)
+    ///     .open()?;
+    ///
+    /// let hal = hal::FtHal::init_freq(device, 3_000_000)?;
+    /// let mut i2c = hal.i2c()?;
     /// i2c.set_fast(true);
+    /// # }
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
     pub fn set_fast(&mut self, fast: bool) {
