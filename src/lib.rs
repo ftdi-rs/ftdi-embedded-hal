@@ -124,12 +124,6 @@ struct FtInner<Device: MpsseCmdExecutor> {
     pins: [Option<PinUse>; 8],
 }
 
-impl<Device: FtdiCommon> Drop for FtInner<Device> {
-    fn drop(&mut self) {
-        self.ft.close().ok();
-    }
-}
-
 impl<Device: MpsseCmdExecutor> FtInner<Device> {
     /// Allocate a pin for a specific use.
     pub fn allocate_pin(&mut self, idx: u8, purpose: PinUse) {
@@ -157,29 +151,13 @@ impl<Device: MpsseCmdExecutor> From<Device> for FtInner<Device> {
     }
 }
 
-/// Type state for an initialized FTDI HAL.
-///
-/// More information about type states can be found in the [rust-embedded book].
-///
-/// [rust-embedded book]: https://docs.rust-embedded.org/book/static-guarantees/design-contracts.html
-pub struct Initialized;
-
-/// Type state for an uninitialized FTDI HAL.
-///
-/// More information about type states can be found in the [rust-embedded book].
-///
-/// [rust-embedded book]: https://docs.rust-embedded.org/book/static-guarantees/design-contracts.html
-pub struct Uninitialized;
-
 /// FTxxx device.
 #[derive(Debug)]
-pub struct FtHal<Device: MpsseCmdExecutor, INITIALIZED> {
-    #[allow(dead_code)]
-    init: INITIALIZED,
+pub struct FtHal<Device: MpsseCmdExecutor> {
     mtx: Mutex<RefCell<FtInner<Device>>>,
 }
 
-impl<Device: MpsseCmdExecutor> FtHal<Device, Uninitialized>
+impl<Device: MpsseCmdExecutor> FtHal<Device>
 {
     /// Initialize the FTDI MPSSE with sane defaults.
     ///
@@ -202,10 +180,10 @@ impl<Device: MpsseCmdExecutor> FtHal<Device, Uninitialized>
     /// let ftdi: Ft232hHal<Initialized> = ftdi.init_default()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
-    pub fn init_default(device: Device) -> Result<FtHal<Device, Initialized>> {
+    pub fn init_default(device: Device) -> Result<FtHal<Device>> {
         FtHal::init(device, &MpsseSettings::default())
     }
-    pub fn init_basic(device: Device, freq: u32) -> Result<FtHal<Device, Initialized>> {
+    pub fn init_basic(device: Device, freq: u32) -> Result<FtHal<Device>> {
         let settings: MpsseSettings = MpsseSettings {
             clock_frequency: Some(freq),
             ..Default::default()
@@ -245,54 +223,16 @@ impl<Device: MpsseCmdExecutor> FtHal<Device, Uninitialized>
     pub fn init(
         mut device: Device,
         mpsse_settings: &MpsseSettings,
-    ) -> Result<FtHal<Device, Initialized>> {
+    ) -> Result<FtHal<Device>> {
         device.init(mpsse_settings)?;
 
         Ok(FtHal {
-            init: Initialized,
             mtx: Mutex::new(RefCell::new(device.into()))
         })
     }
 }
 
-impl<Device: MpsseCmdExecutor> From<Device> for FtHal<Device, Uninitialized>
-{
-    /// Create a new FT232H structure from a specific FT232H device.
-    ///
-    /// # Examples
-    ///
-    /// Selecting a device with a specific serial number.
-    ///
-    /// ```no_run
-    /// use ftdi_embedded_hal as hal;
-    /// use hal::libftd2xx::Ft232h;
-    /// use hal::Ft232hHal;
-    ///
-    /// let ft = Ft232h::with_serial_number("FT59UO4C")?;
-    /// let ftdi = Ft232hHal::from(ft).init_default()?;
-    /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
-    /// ```
-    ///
-    /// Selecting a device with a specific description.
-    ///
-    /// ```no_run
-    /// use ftdi_embedded_hal as hal;
-    /// use hal::libftd2xx::Ft232h;
-    /// use hal::FtHal;
-    ///
-    /// let ft = Ft232h::with_description("My device description")?;
-    /// let ftdi = FtHal::from(ft).init_default()?;
-    /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
-    /// ```
-    fn from(ft: Device) -> Self {
-        FtHal {
-            init: Uninitialized,
-            mtx: Mutex::new(RefCell::new(ft.into())),
-        }
-    }
-}
-
-impl<Device: MpsseCmdExecutor> FtHal<Device, Initialized>
+impl<Device: MpsseCmdExecutor> FtHal<Device>
 {
 
     /// Aquire the SPI peripheral for the FT232H.
