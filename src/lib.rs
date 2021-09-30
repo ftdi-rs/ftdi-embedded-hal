@@ -79,7 +79,7 @@
 #![forbid(unsafe_code)]
 
 pub use embedded_hal;
-pub use libftd2xx;
+pub use ftdi_mpsse;
 
 mod delay;
 mod gpio;
@@ -91,13 +91,8 @@ pub use gpio::OutputPin;
 pub use i2c::{I2c, I2cError};
 pub use spi::Spi;
 
-use libftd2xx::{
-    DeviceTypeError, Ft2232h, Ft232h, Ft4232h, Ftdi, FtdiCommon, FtdiMpsse, MpsseSettings,
-    TimeoutError,
-};
-use std::convert::TryFrom;
-use std::ops::Drop;
-use std::{cell::RefCell, convert::TryInto, sync::Mutex, time::Duration};
+use ftdi_mpsse::{MpsseSettings, MpsseCmdExecutor};
+use std::{cell::RefCell, sync::Mutex};
 
 /// State tracker for each pin on the FTDI chip.
 #[derive(Debug, Clone, Copy)]
@@ -118,7 +113,7 @@ impl std::fmt::Display for PinUse {
 }
 
 #[derive(Debug)]
-struct FtInner<Device: FtdiCommon> {
+struct FtInner<Device: MpsseCmdExecutor> {
     /// FTDI device.
     ft: Device,
     /// GPIO direction.
@@ -135,7 +130,7 @@ impl<Device: FtdiCommon> Drop for FtInner<Device> {
     }
 }
 
-impl<Device: FtdiCommon> FtInner<Device> {
+impl<Device: MpsseCmdExecutor> FtInner<Device> {
     /// Allocate a pin for a specific use.
     pub fn allocate_pin(&mut self, idx: u8, purpose: PinUse) {
         assert!(idx < 8, "Pin index {} is out of range 0 - 7", idx);
@@ -151,7 +146,7 @@ impl<Device: FtdiCommon> FtInner<Device> {
     }
 }
 
-impl<Device: FtdiCommon> From<Device> for FtInner<Device> {
+impl<Device: MpsseCmdExecutor> From<Device> for FtInner<Device> {
     fn from(ft: Device) -> Self {
         FtInner {
             ft,
@@ -176,73 +171,16 @@ pub struct Initialized;
 /// [rust-embedded book]: https://docs.rust-embedded.org/book/static-guarantees/design-contracts.html
 pub struct Uninitialized;
 
-/// FT232H device.
-pub type Ft232hHal<T> = FtHal<Ft232h, T>;
-
-/// FT2232H device.
-pub type Ft2232hHal<T> = FtHal<Ft2232h, T>;
-
-/// FT4232H device.
-pub type Ft4232hHal<T> = FtHal<Ft4232h, T>;
-
 /// FTxxx device.
 #[derive(Debug)]
-pub struct FtHal<Device: FtdiCommon, INITIALIZED> {
+pub struct FtHal<Device: MpsseCmdExecutor, INITIALIZED> {
     #[allow(dead_code)]
     init: INITIALIZED,
     mtx: Mutex<RefCell<FtInner<Device>>>,
 }
 
-impl<Device: FtdiCommon + TryFrom<Ftdi, Error = DeviceTypeError> + FtdiMpsse>
-    FtHal<Device, Uninitialized>
+impl<Device: MpsseCmdExecutor> FtHal<Device, Uninitialized>
 {
-    /// Create a new FTxxx structure.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use ftdi_embedded_hal as hal;
-    ///
-    /// let ftdi = hal::Ft232hHal::new()?.init_default()?;
-    /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
-    /// ```
-    pub fn new() -> Result<FtHal<Device, Uninitialized>, DeviceTypeError> {
-        let ft: Device = Ftdi::new()?.try_into()?;
-        Ok(ft.into())
-    }
-
-    /// Create a new FTxxx structure from a serial number.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use ftdi_embedded_hal as hal;
-    ///
-    /// let ftdi = hal::Ft232hHal::with_serial_number("FT6ASGXH")?.init_default()?;
-    /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
-    /// ```
-    pub fn with_serial_number(sn: &str) -> Result<FtHal<Device, Uninitialized>, DeviceTypeError> {
-        let ft: Device = Ftdi::with_serial_number(sn)?.try_into()?;
-        Ok(ft.into())
-    }
-
-    /// Open a `Ftxxx` device by its device description.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use libftd2xx::Ft4232h;
-    ///
-    /// Ft4232h::with_description("FT4232H-56Q MiniModule A")?;
-    /// # Ok::<(), libftd2xx::DeviceTypeError>(())
-    /// ```
-    pub fn with_description(
-        description: &str,
-    ) -> Result<FtHal<Device, Uninitialized>, DeviceTypeError> {
-        let ft: Device = Ftdi::with_description(description)?.try_into()?;
-        Ok(ft.into())
-    }
-
     /// Initialize the FTDI MPSSE with sane defaults.
     ///
     /// Default values:
@@ -264,18 +202,16 @@ impl<Device: FtdiCommon + TryFrom<Ftdi, Error = DeviceTypeError> + FtdiMpsse>
     /// let ftdi: Ft232hHal<Initialized> = ftdi.init_default()?;
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
-    pub fn init_default(self) -> Result<FtHal<Device, Initialized>, TimeoutError> {
-        const DEFAULT: MpsseSettings = MpsseSettings {
-            reset: true,
-            in_transfer_size: 4096,
-            read_timeout: Duration::from_secs(1),
-            write_timeout: Duration::from_secs(1),
-            latency_timer: Duration::from_millis(16),
-            mask: 0x00,
-            clock_frequency: Some(100_000),
+    pub fn init_default(device: Device) -> Result<FtHal<Device, Initialized>> {
+        FtHal::init(device, &MpsseSettings::default())
+    }
+    pub fn init_basic(device: Device, freq: u32) -> Result<FtHal<Device, Initialized>> {
+        let settings: MpsseSettings = MpsseSettings {
+            clock_frequency: Some(freq),
+            ..Default::default()
         };
 
-        self.init(&DEFAULT)
+        FtHal::init(device, &settings)
     }
 
     /// Initialize the FTDI MPSSE with custom values.
@@ -307,25 +243,20 @@ impl<Device: FtdiCommon + TryFrom<Ftdi, Error = DeviceTypeError> + FtdiMpsse>
     ///
     /// [`MpsseSettings`]: libftd2xx::MpsseSettings
     pub fn init(
-        self,
+        mut device: Device,
         mpsse_settings: &MpsseSettings,
-    ) -> Result<FtHal<Device, Initialized>, TimeoutError> {
-        {
-            let lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
-            let mut inner = lock.borrow_mut();
-            let mut settings = *mpsse_settings;
-            settings.mask = inner.direction;
-            inner.ft.initialize_mpsse(&mpsse_settings)?;
-        }
+    ) -> Result<FtHal<Device, Initialized>> {
+        device.init(mpsse_settings)?;
 
         Ok(FtHal {
             init: Initialized,
-            mtx: self.mtx,
+            mtx: Mutex::new(RefCell::new(device.into()))
         })
     }
 }
 
-impl<Device: FtdiCommon> From<Device> for FtHal<Device, Uninitialized> {
+impl<Device: MpsseCmdExecutor> From<Device> for FtHal<Device, Uninitialized>
+{
     /// Create a new FT232H structure from a specific FT232H device.
     ///
     /// # Examples
@@ -361,7 +292,9 @@ impl<Device: FtdiCommon> From<Device> for FtHal<Device, Uninitialized> {
     }
 }
 
-impl<Device: FtdiCommon> FtHal<Device, Initialized> {
+impl<Device: MpsseCmdExecutor> FtHal<Device, Initialized>
+{
+
     /// Aquire the SPI peripheral for the FT232H.
     ///
     /// Pin assignments:

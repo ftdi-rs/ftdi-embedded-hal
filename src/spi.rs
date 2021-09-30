@@ -1,7 +1,7 @@
 use crate::{FtInner, PinUse};
 use embedded_hal::spi::Polarity;
-use libftd2xx::{ClockData, ClockDataOut, FtdiCommon, MpsseCmdBuilder, TimeoutError};
 use std::{cell::RefCell, sync::Mutex};
+use ftdi_mpsse::{ClockData, ClockDataOut, MpsseCmdBuilder, MpsseCmdExecutor};
 
 /// FTDI SPI interface.
 ///
@@ -9,7 +9,8 @@ use std::{cell::RefCell, sync::Mutex};
 ///
 /// [`FtHal::spi`]: crate::FtHal::spi
 #[derive(Debug)]
-pub struct Spi<'a, Device: FtdiCommon> {
+pub struct Spi<'a, Device: MpsseCmdExecutor>
+{
     /// Parent FTDI device.
     mtx: &'a Mutex<RefCell<FtInner<Device>>>,
     /// MPSSE command used to clock data in and out simultaneously.
@@ -22,7 +23,8 @@ pub struct Spi<'a, Device: FtdiCommon> {
     clk_out: ClockDataOut,
 }
 
-impl<'a, Device: FtdiCommon> Spi<'a, Device> {
+impl<'a, Device: MpsseCmdExecutor> Spi<'a, Device>
+{
     pub(crate) fn new(mtx: &Mutex<RefCell<FtInner<Device>>>) -> Result<Spi<Device>, TimeoutError> {
         let lock = mtx.lock().expect("Failed to aquire FTDI mutex");
         let mut inner = lock.borrow_mut();
@@ -39,7 +41,7 @@ impl<'a, Device: FtdiCommon> Spi<'a, Device> {
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
             .set_gpio_lower(inner.value, inner.direction)
             .send_immediate();
-        inner.ft.write_all(cmd.as_slice())?;
+        inner.ft.send(cmd.as_slice())?;
 
         Ok(Spi {
             mtx,
@@ -77,8 +79,10 @@ impl<'a, Device: FtdiCommon> Spi<'a, Device> {
     }
 }
 
-impl<'a, Device: FtdiCommon> embedded_hal::blocking::spi::Write<u8> for Spi<'a, Device> {
+impl<'a, Device: MpsseCmdExecutor> embedded_hal::blocking::spi::Write<u8> for Spi<'a, Device>
+{
     type Error = TimeoutError;
+
     fn write(&mut self, words: &[u8]) -> Result<(), Self::Error> {
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
             .clock_data_out(self.clk_out, words)
@@ -86,12 +90,14 @@ impl<'a, Device: FtdiCommon> embedded_hal::blocking::spi::Write<u8> for Spi<'a, 
 
         let lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
         let mut inner = lock.borrow_mut();
-        inner.ft.write_all(cmd.as_slice())
+        inner.ft.send(cmd.as_slice())
     }
 }
 
-impl<'a, Device: FtdiCommon> embedded_hal::blocking::spi::Transfer<u8> for Spi<'a, Device> {
+impl<'a, Device: MpsseCmdExecutor> embedded_hal::blocking::spi::Transfer<u8> for Spi<'a, Device>
+{
     type Error = TimeoutError;
+
     fn transfer<'w>(&mut self, words: &'w mut [u8]) -> Result<&'w [u8], Self::Error> {
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
             .clock_data(self.clk, words)
@@ -99,14 +105,15 @@ impl<'a, Device: FtdiCommon> embedded_hal::blocking::spi::Transfer<u8> for Spi<'
 
         let lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
         let mut inner = lock.borrow_mut();
-        inner.ft.write_all(cmd.as_slice())?;
-        inner.ft.read_all(words)?;
+        inner.ft.send(cmd.as_slice())?;
+        inner.ft.recv(words)?;
 
         Ok(words)
     }
 }
 
-impl<'a, Device: FtdiCommon> embedded_hal::spi::FullDuplex<u8> for Spi<'a, Device> {
+impl<'a, Device: MpsseCmdExecutor> embedded_hal::spi::FullDuplex<u8> for Spi<'a, Device>
+{
     type Error = TimeoutError;
 
     fn read(&mut self) -> nb::Result<u8, Self::Error> {
