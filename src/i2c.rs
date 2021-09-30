@@ -1,5 +1,5 @@
 use crate::{FtInner, PinUse};
-use libftd2xx::{ClockBitsIn, ClockBitsOut, FtdiCommon, MpsseCmdBuilder, TimeoutError};
+use ftdi_mpsse::{ClockBitsIn, ClockBitsOut, MpsseCmdBuilder, MpsseCmdExecutor};
 use std::{cell::RefCell, error::Error, fmt, sync::Mutex};
 
 /// SCL bitmask
@@ -10,39 +10,13 @@ const SDA: u8 = 1 << 1;
 const BITS_IN: ClockBitsIn = ClockBitsIn::MsbPos;
 const BITS_OUT: ClockBitsOut = ClockBitsOut::MsbNeg;
 
-/// Error returned from I2C methods.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum I2cError {
-    /// Timeout error from the FTDI device.
-    Timeout(TimeoutError),
-    /// Missing ACK from slave.
-    Nak,
-}
-
-impl From<TimeoutError> for I2cError {
-    fn from(to: TimeoutError) -> Self {
-        I2cError::Timeout(to)
-    }
-}
-
-impl fmt::Display for I2cError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            I2cError::Timeout(to) => write!(f, "{}", to),
-            I2cError::Nak => write!(f, "ACK not recieved from slave"),
-        }
-    }
-}
-
-impl Error for I2cError {}
-
 /// FTDI I2C interface.
 ///
 /// This is created by calling [`FtHal::i2c`].
 ///
 /// [`FtHal::i2c`]: crate::FtHal::i2c
 #[derive(Debug)]
-pub struct I2c<'a, Device: FtdiCommon> {
+pub struct I2c<'a, Device: MpsseCmdExecutor> {
     /// Parent FTDI device.
     mtx: &'a Mutex<RefCell<FtInner<Device>>>,
     /// Length of the start, repeated start, and stop conditions.
@@ -54,7 +28,8 @@ pub struct I2c<'a, Device: FtdiCommon> {
     fast: bool,
 }
 
-impl<'a, Device: FtdiCommon> I2c<'a, Device> {
+impl<'a, Device: MpsseCmdExecutor> I2c<'a, Device>
+{
     pub(crate) fn new(mtx: &Mutex<RefCell<FtInner<Device>>>) -> Result<I2c<Device>, TimeoutError> {
         let lock = mtx.lock().expect("Failed to aquire FTDI mutex");
         let mut inner = lock.borrow_mut();
@@ -76,7 +51,7 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
             .set_gpio_lower(inner.value, inner.direction)
             .enable_3phase_data_clocking()
             .send_immediate();
-        inner.ft.write_all(cmd.as_slice())?;
+        inner.ft.send(cmd.as_slice())?;
 
         Ok(I2c {
             mtx,
@@ -190,10 +165,10 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
             .set_gpio_lower(inner.value, inner.direction)
             .send_immediate();
 
-        inner.ft.write_all(&mpsse_cmd.as_slice())?;
+        inner.ft.send(&mpsse_cmd.as_slice())?;
         let mut ack_buf: [u8; 1] = [0; 1];
-        inner.ft.read_all(&mut ack_buf)?;
-        inner.ft.read_all(buffer)?;
+        inner.ft.recv(&mut ack_buf)?;
+        inner.ft.recv(buffer)?;
 
         if (ack_buf[0] & 0b1) != 0x00 {
             return Err(I2cError::Nak);
@@ -227,9 +202,9 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
             .clock_bits_in(BITS_IN, 1)
             .send_immediate();
 
-        inner.ft.write_all(mpsse_cmd.as_slice())?;
+        inner.ft.send(mpsse_cmd.as_slice())?;
         let mut ack_buf: [u8; 1] = [0; 1];
-        inner.ft.read_all(&mut ack_buf)?;
+        inner.ft.recv(&mut ack_buf)?;
         if (ack_buf[0] & 0b1) != 0x00 {
             return Err(I2cError::Nak);
         }
@@ -270,8 +245,8 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
             .set_gpio_lower(inner.value, inner.direction)
             .send_immediate();
 
-        inner.ft.write_all(mpsse_cmd.as_slice())?;
-        inner.ft.read_all(buffer)?;
+        inner.ft.send(mpsse_cmd.as_slice())?;
+        inner.ft.recv(buffer)?;
 
         Ok(())
     }
@@ -327,9 +302,9 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
             .set_gpio_lower(inner.value, inner.direction)
             .send_immediate();
 
-        inner.ft.write_all(mpsse_cmd.as_slice())?;
+        inner.ft.send(mpsse_cmd.as_slice())?;
         let mut ack_buf: Vec<u8> = vec![0; 1 + bytes.len()];
-        inner.ft.read_all(ack_buf.as_mut_slice())?;
+        inner.ft.recv(ack_buf.as_mut_slice())?;
         if ack_buf.iter().any(|&ack| (ack & 0b1) != 0x00) {
             Err(I2cError::Nak)
         } else {
@@ -362,9 +337,9 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
             .clock_bits_in(BITS_IN, 1)
             .send_immediate();
 
-        inner.ft.write_all(mpsse_cmd.as_slice())?;
+        inner.ft.send(mpsse_cmd.as_slice())?;
         let mut ack_buf: [u8; 1] = [0; 1];
-        inner.ft.read_all(&mut ack_buf)?;
+        inner.ft.recv(&mut ack_buf)?;
         if (ack_buf[0] & 0b1) != 0x00 {
             return Err(I2cError::Nak);
         }
@@ -399,9 +374,9 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
 
             mpsse_cmd = mpsse_cmd.send_immediate();
 
-            inner.ft.write_all(mpsse_cmd.as_slice())?;
+            inner.ft.send(mpsse_cmd.as_slice())?;
             let mut ack_buf: [u8; 1] = [0; 1];
-            inner.ft.read_all(&mut ack_buf)?;
+            inner.ft.recv(&mut ack_buf)?;
             if (ack_buf[0] & 0b1) != 0x00 {
                 return Err(I2cError::Nak);
             }
@@ -506,10 +481,10 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
             .set_gpio_lower(inner.value, inner.direction)
             .send_immediate();
 
-        inner.ft.write_all(&mpsse_cmd.as_slice())?;
+        inner.ft.send(&mpsse_cmd.as_slice())?;
         let mut ack_buf: Vec<u8> = vec![0; 2 + bytes.len()];
-        inner.ft.read_all(&mut ack_buf)?;
-        inner.ft.read_all(buffer)?;
+        inner.ft.recv(&mut ack_buf)?;
+        inner.ft.recv(buffer)?;
 
         if ack_buf.iter().any(|&ack| (ack & 0b1) != 0x00) {
             Err(I2cError::Nak)
@@ -551,9 +526,9 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
             .clock_bits_in(BITS_IN, 1)
             .send_immediate();
 
-        inner.ft.write_all(mpsse_cmd.as_slice())?;
+        inner.ft.send(mpsse_cmd.as_slice())?;
         let mut ack_buf: [u8; 1] = [0; 1];
-        inner.ft.read_all(&mut ack_buf)?;
+        inner.ft.recv(&mut ack_buf)?;
         if (ack_buf[0] & 0b1) != 0x00 {
             return Err(I2cError::Nak);
         }
@@ -568,9 +543,9 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
                 .clock_bits_in(BITS_IN, 1)
                 .send_immediate();
 
-            inner.ft.write_all(mpsse_cmd.as_slice())?;
+            inner.ft.send(mpsse_cmd.as_slice())?;
             let mut ack_buf: [u8; 1] = [0; 1];
-            inner.ft.read_all(&mut ack_buf)?;
+            inner.ft.recv(&mut ack_buf)?;
             if (ack_buf[0] & 0b1) != 0x00 {
                 return Err(I2cError::Nak);
             }
@@ -597,9 +572,9 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
             .clock_bits_in(BITS_IN, 1)
             .send_immediate();
 
-        inner.ft.write_all(mpsse_cmd.as_slice())?;
+        inner.ft.send(mpsse_cmd.as_slice())?;
         let mut ack_buf: [u8; 1] = [0; 1];
-        inner.ft.read_all(&mut ack_buf)?;
+        inner.ft.recv(&mut ack_buf)?;
         if (ack_buf[0] & 0b1) != 0x00 {
             return Err(I2cError::Nak);
         }
@@ -639,14 +614,15 @@ impl<'a, Device: FtdiCommon> I2c<'a, Device> {
             .set_gpio_lower(inner.value, inner.direction)
             .send_immediate();
 
-        inner.ft.write_all(&mpsse_cmd.as_slice())?;
-        inner.ft.read_all(buffer)?;
+        inner.ft.send(&mpsse_cmd.as_slice())?;
+        inner.ft.recv(buffer)?;
 
         Ok(())
     }
 }
 
-impl<'a, Device: FtdiCommon> embedded_hal::blocking::i2c::Read for I2c<'a, Device> {
+impl<'a, Device: MpsseCmdExecutor> embedded_hal::blocking::i2c::Read for I2c<'a, Device>
+{
     type Error = I2cError;
 
     fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
@@ -658,7 +634,8 @@ impl<'a, Device: FtdiCommon> embedded_hal::blocking::i2c::Read for I2c<'a, Devic
     }
 }
 
-impl<'a, Device: FtdiCommon> embedded_hal::blocking::i2c::Write for I2c<'a, Device> {
+impl<'a, Device: MpsseCmdExecutor> embedded_hal::blocking::i2c::Write for I2c<'a, Device>
+{
     type Error = I2cError;
 
     fn write(&mut self, addr: u8, bytes: &[u8]) -> Result<(), Self::Error> {
@@ -670,7 +647,8 @@ impl<'a, Device: FtdiCommon> embedded_hal::blocking::i2c::Write for I2c<'a, Devi
     }
 }
 
-impl<'a, Device: FtdiCommon> embedded_hal::blocking::i2c::WriteRead for I2c<'a, Device> {
+impl<'a, Device: MpsseCmdExecutor> embedded_hal::blocking::i2c::WriteRead for I2c<'a, Device>
+{
     type Error = I2cError;
 
     fn write_read(
