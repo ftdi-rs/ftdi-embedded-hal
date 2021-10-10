@@ -187,10 +187,15 @@ where
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
     pub fn init_default(device: Device) -> Result<FtHal<Device>, Error<E>> {
-        Ok(FtHal::init(device, &MpsseSettings::default())?)
+        let settings: MpsseSettings = MpsseSettings {
+            clock_frequency: Some(100_000),
+            ..Default::default()
+        };
+
+        Ok(FtHal::init(device, &settings)?)
     }
 
-    pub fn init_basic(device: Device, freq: u32) -> Result<FtHal<Device>, Error<E>> {
+    pub fn init_freq(device: Device, freq: u32) -> Result<FtHal<Device>, Error<E>> {
         let settings: MpsseSettings = MpsseSettings {
             clock_frequency: Some(freq),
             ..Default::default()
