@@ -22,10 +22,13 @@
 //! features = ["libftd2xx-static"]
 //! ```
 //!
-//! # Examples
+//! # Limitations
 //!
-//! * [newAM/eeprom25aa02e48-rs]
-//! * [newAM/bme280-rs]
+//! * Limited trait support: SPI, I2C, Delay, and OutputPin traits are implemented.
+//! * Limited device support: FT232H, FT2232H, FT4232H.
+//! * Limited SPI modes support: MODE0, MODE2.
+//!
+//! # Examples
 //!
 //! ## SPI
 //!
@@ -123,18 +126,17 @@
 //! # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
 //! ```
 //!
-//! # Limitations
+//! ## More examples
 //!
-//! * Limited trait support: SPI, I2C, Delay, and OutputPin traits are implemented.
-//! * Limited device support: FT232H, FT2232H, FT4232H.
-//! * Limited SPI modes support: MODE0, MODE2.
+//! * [newAM/eeprom25aa02e48-rs]: read data from Microchip 25AA02E48 SPI EEPROM
+//! * [newAM/bme280-rs]: read samples from Bosch BME280 sensor via I2C protocol
 //!
 //! [embedded-hal]: https://github.com/rust-embedded/embedded-hal
 //! [ftdi-rs]: https://github.com/tanriol/ftdi-rs
 //! [libftd2xx crate]: https://github.com/ftdi-rs/libftd2xx-rs/
 //! [libftd2xx]: https://github.com/ftdi-rs/libftd2xx-rs
 //! [newAM/eeprom25aa02e48-rs]: https://github.com/newAM/eeprom25aa02e48-rs/blob/main/examples/ftdi.rs
-//! [newAM/bme280-rs]: https://github.com/newAM/bme280-rs/blob/main/examples/ftdi.rs
+//! [newAM/bme280-rs]: https://github.com/newAM/bme280-rs/blob/main/examples/ftdi-i2c.rs
 //! [udev rules]: https://github.com/ftdi-rs/libftd2xx-rs/#udev-rules
 //! [setup executable]: https://www.ftdichip.com/Drivers/CDM/CDM21228_Setup.zip
 #![doc(html_root_url = "https://docs.rs/ftdi-embedded-hal/0.9.1")]
