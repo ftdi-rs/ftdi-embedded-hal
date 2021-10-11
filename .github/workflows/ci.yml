@@ -21,15 +21,47 @@ jobs:
           toolchain: stable
       - run: RUSTFLAGS="-D warnings" cargo build
 
-  test:
-    name: Cargo Test
+  examples:
+    name: Cargo Examples
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        features:
+          - libftd2xx
+          - ftdi
     steps:
       - uses: actions/checkout@v2.3.4
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - run: RUSTFLAGS="-D warnings" cargo test
+      - run: |
+          if ${{ matrix.features == 'ftdi' }}
+          then
+            sudo apt-get update
+            sudo apt-get install -y libftdi1 libftdi1-dev pkg-config
+          fi
+          RUSTFLAGS="-D warnings" cargo build --features ${{ matrix.features }} --examples
+
+  test:
+    name: Cargo Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        features:
+          - libftd2xx
+          - ftdi
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: |
+          if ${{ matrix.features == 'ftdi' }}
+          then
+            sudo apt-get update
+            sudo apt-get install -y libftdi1 libftdi1-dev pkg-config
+          fi
+          RUSTFLAGS="-D warnings" cargo test --features ${{ matrix.features }}
 
   doc:
     name: Cargo Doc
