@@ -10,9 +10,6 @@
 use embedded_hal::prelude::*;
 use ftdi_embedded_hal as hal;
 
-#[cfg(feature = "libftd2xx")]
-use std::convert::TryInto;
-
 #[cfg(all(feature = "ftdi", feature = "libftd2xx"))]
 compile_error!("features 'ftdi' and 'libftd2xx' cannot be enabled at the same time");
 
