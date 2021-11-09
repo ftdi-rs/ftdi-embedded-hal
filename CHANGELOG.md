@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed to `ftdi-embedded-hal`.
 - The `ftd2xx` backend is no longer enabled by default.
 - Changed the error type to support multiple backends.
+- Updated the edition from 2018 to 2021.
 
 ## [0.9.1] - 2021-08-10
 ### Fixed

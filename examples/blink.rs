@@ -2,9 +2,6 @@ use embedded_hal::digital::v2::OutputPin;
 use ftdi_embedded_hal as hal;
 use std::{thread::sleep, time::Duration};
 
-#[cfg(feature = "libftd2xx")]
-use std::convert::TryInto;
-
 const NUM_BLINK: usize = 10;
 const SLEEP_DURATION: Duration = Duration::from_millis(500);
 
