@@ -25,7 +25,7 @@ FTDI device into the [embedded-hal] traits.
 
 ```toml
 [dependencies.ftdi-embedded-hal]
-version = "~0.9.1"
+version = "0.10"
 features = ["libftd2xx-static"]
 ```
 
@@ -45,21 +45,20 @@ use ftdi_embedded_hal as hal;
 
 let device = ftdi::find_by_vid_pid(0x0403, 0x6010)
     .interface(ftdi::Interface::A)
-    .open()
-    .unwrap();
+    .open()?;
 
-let hal = hal::FtHal::init_freq(device, 3_000_000).unwrap();
-let spi = hal.spi().unwrap();
+let hal = hal::FtHal::init_freq(device, 3_000_000)?;
+let spi = hal.spi()?;
 ```
 
 Communicate with SPI devices using [libftd2xx] driver:
 ```rust
 use ftdi_embedded_hal as hal;
 
-let device = libftd2xx::Ft2232h::with_description("Dual RS232-HS A").unwrap();
+let device = libftd2xx::Ft2232h::with_description("Dual RS232-HS A")?;
 
-let hal = hal::FtHal::init_freq(device, 3_000_000).unwrap();
-let spi = hal.spi().unwrap();
+let hal = hal::FtHal::init_freq(device, 3_000_000)?;
+let spi = hal.spi()?;
 ```
 
 ### I2C
@@ -70,21 +69,20 @@ use ftdi_embedded_hal as hal;
 
 let device = ftdi::find_by_vid_pid(0x0403, 0x6010)
     .interface(ftdi::Interface::A)
-    .open()
-    .unwrap();
+    .open()?;
 
-let hal = hal::FtHal::init_freq(device, 400_000).unwrap();
-let i2c = hal.i2c().unwrap();
+let hal = hal::FtHal::init_freq(device, 400_000)?;
+let i2c = hal.i2c()?;
 ```
 
 Communicate with I2C devices using [libftd2xx] driver:
 ```rust
 use ftdi_embedded_hal as hal;
 
-let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
+let device = libftd2xx::Ft232h::with_description("Single RS232-HS")?;
 
-let hal = hal::FtHal::init_freq(device, 400_000).unwrap();
-let i2c = hal.i2c().unwrap();
+let hal = hal::FtHal::init_freq(device, 400_000)?;
+let i2c = hal.i2c()?;
 ```
 
 ### GPIO
@@ -93,9 +91,9 @@ Control GPIO pins using [libftd2xx] driver:
 ```rust
 use ftdi_embedded_hal as hal;
 
-let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
+let device = libftd2xx::Ft232h::with_description("Single RS232-HS")?;
 
-let hal = hal::FtHal::init_default(device).unwrap();
+let hal = hal::FtHal::init_default(device)?;
 let gpio = hal.ad6();
 ```
 
@@ -105,10 +103,9 @@ use ftdi_embedded_hal as hal;
 
 let device = ftdi::find_by_vid_pid(0x0403, 0x6010)
     .interface(ftdi::Interface::A)
-    .open()
-    .unwrap();
+    .open()?;
 
-let hal = hal::FtHal::init_default(device).unwrap();
+let hal = hal::FtHal::init_default(device)?;
 let gpio = hal.ad6();
 ```
 
