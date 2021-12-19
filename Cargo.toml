@@ -13,6 +13,7 @@ readme = "README.md"
 
 [features]
 libftd2xx-static = ["libftd2xx/static"]
+unproven = ["embedded-hal/unproven"]
 default = []
 
 [dependencies]
