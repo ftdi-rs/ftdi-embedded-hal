@@ -144,6 +144,8 @@
 
 pub use embedded_hal;
 pub use ftdi_mpsse;
+#[cfg(feature = "unproven")]
+use gpio::InputPin;
 
 mod delay;
 mod error;
@@ -162,10 +164,12 @@ use std::{cell::RefCell, sync::Mutex};
 
 /// State tracker for each pin on the FTDI chip.
 #[derive(Debug, Clone, Copy)]
+#[cfg_attr(not(feature = "unproven"), allow(dead_code))]
 enum PinUse {
     I2c,
     Spi,
     Output,
+    Input,
 }
 
 impl std::fmt::Display for PinUse {
@@ -173,7 +177,8 @@ impl std::fmt::Display for PinUse {
         match self {
             PinUse::I2c => write!(f, "I2C"),
             PinUse::Spi => write!(f, "SPI"),
-            PinUse::Output => write!(f, "GPIO"),
+            PinUse::Output => write!(f, "OUTPUT"),
+            PinUse::Input => write!(f, "INPUT"),
         }
     }
 }
@@ -400,8 +405,18 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad0(&self) -> OutputPin<Device> {
+    pub fn ad0(&self) -> Result<OutputPin<Device>, Error<E>> {
         OutputPin::new(&self.mtx, 0)
+    }
+
+    /// Aquire the digital input pin 0 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    #[cfg(feature = "unproven")]
+    pub fn adi0(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(&self.mtx, 0)
     }
 
     /// Aquire the digital output pin 1 for the FT232H.
@@ -409,8 +424,18 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad1(&self) -> OutputPin<Device> {
+    pub fn ad1(&self) -> Result<OutputPin<Device>, Error<E>> {
         OutputPin::new(&self.mtx, 1)
+    }
+
+    /// Aquire the digital input pin 1 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    #[cfg(feature = "unproven")]
+    pub fn adi1(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(&self.mtx, 1)
     }
 
     /// Aquire the digital output pin 2 for the FT232H.
@@ -418,8 +443,18 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad2(&self) -> OutputPin<Device> {
+    pub fn ad2(&self) -> Result<OutputPin<Device>, Error<E>> {
         OutputPin::new(&self.mtx, 2)
+    }
+
+    /// Aquire the digital input pin 2 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    #[cfg(feature = "unproven")]
+    pub fn adi2(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(&self.mtx, 2)
     }
 
     /// Aquire the digital output pin 3 for the FT232H.
@@ -427,8 +462,18 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad3(&self) -> OutputPin<Device> {
+    pub fn ad3(&self) -> Result<OutputPin<Device>, Error<E>> {
         OutputPin::new(&self.mtx, 3)
+    }
+
+    /// Aquire the digital input pin 3 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    #[cfg(feature = "unproven")]
+    pub fn adi3(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(&self.mtx, 3)
     }
 
     /// Aquire the digital output pin 4 for the FT232H.
@@ -436,8 +481,18 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad4(&self) -> OutputPin<Device> {
+    pub fn ad4(&self) -> Result<OutputPin<Device>, Error<E>> {
         OutputPin::new(&self.mtx, 4)
+    }
+
+    /// Aquire the digital input pin 4 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    #[cfg(feature = "unproven")]
+    pub fn adi4(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(&self.mtx, 4)
     }
 
     /// Aquire the digital output pin 5 for the FT232H.
@@ -445,8 +500,18 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad5(&self) -> OutputPin<Device> {
+    pub fn ad5(&self) -> Result<OutputPin<Device>, Error<E>> {
         OutputPin::new(&self.mtx, 5)
+    }
+
+    /// Aquire the digital input pin 5 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    #[cfg(feature = "unproven")]
+    pub fn adi5(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(&self.mtx, 5)
     }
 
     /// Aquire the digital output pin 6 for the FT232H.
@@ -454,8 +519,18 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad6(&self) -> OutputPin<Device> {
+    pub fn ad6(&self) -> Result<OutputPin<Device>, Error<E>> {
         OutputPin::new(&self.mtx, 6)
+    }
+
+    /// Aquire the digital input pin 6 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    #[cfg(feature = "unproven")]
+    pub fn adi6(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(&self.mtx, 6)
     }
 
     /// Aquire the digital output pin 7 for the FT232H.
@@ -463,7 +538,17 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    pub fn ad7(&self) -> OutputPin<Device> {
+    pub fn ad7(&self) -> Result<OutputPin<Device>, Error<E>> {
         OutputPin::new(&self.mtx, 7)
+    }
+
+    /// Aquire the digital input pin 7 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    #[cfg(feature = "unproven")]
+    pub fn adi7(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(&self.mtx, 7)
     }
 }

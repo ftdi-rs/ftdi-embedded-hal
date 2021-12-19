@@ -24,7 +24,7 @@ fn main() {
 
     let hal = hal::FtHal::init_freq(device, 1_000_000).unwrap();
     let spi = hal.spi().unwrap();
-    let ncs = hal.ad3();
+    let ncs = hal.ad3().unwrap();
     let delay = Duration::from_millis(10);
 
     let mut flash = Flash::init(spi, ncs).unwrap();

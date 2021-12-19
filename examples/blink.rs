@@ -22,7 +22,7 @@ fn main() {
         .unwrap();
 
     let hal = hal::FtHal::init_default(device).unwrap();
-    let mut output_pin = hal.ad3();
+    let mut output_pin = hal.ad3().unwrap();
 
     println!("Starting blinky example");
     for n in 0..NUM_BLINK {
