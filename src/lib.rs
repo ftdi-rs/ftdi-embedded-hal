@@ -215,7 +215,7 @@ impl<Device: MpsseCmdExecutor> From<Device> for FtInner<Device> {
     fn from(ft: Device) -> Self {
         FtInner {
             ft,
-            direction: 0xFB,
+            direction: 0x00,
             value: 0x00,
             pins: [None; 8],
         }
