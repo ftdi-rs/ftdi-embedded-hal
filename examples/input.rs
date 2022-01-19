@@ -1,4 +1,3 @@
-#[cfg(feature = "unproven")]
 use embedded_hal::digital::v2::InputPin;
 use ftdi_embedded_hal as hal;
 use std::{thread::sleep, time::Duration};
@@ -21,16 +20,13 @@ fn main() {
         .open()
         .unwrap();
 
-    let _hal = hal::FtHal::init_default(device).unwrap();
-    #[cfg(feature = "unproven")]
-    let input = _hal.adi6().unwrap();
+    let hal = hal::FtHal::init_default(device).unwrap();
+
+    let input = hal.adi6().unwrap();
 
     println!("Pin readings:");
     loop {
-        #[cfg(feature = "unproven")]
         println!("AD6 = {}", input.is_high().expect("gpio read failure"));
-        #[cfg(not(feature = "unproven"))]
-        println!("Use 'unproven' feature to enable input gpio");
         sleep(SLEEP_DURATION);
     }
 }

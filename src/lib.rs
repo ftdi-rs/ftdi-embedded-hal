@@ -144,8 +144,6 @@
 
 pub use embedded_hal;
 pub use ftdi_mpsse;
-#[cfg(feature = "unproven")]
-use gpio::InputPin;
 
 mod delay;
 mod error;
@@ -155,7 +153,7 @@ mod spi;
 
 use crate::error::Error;
 pub use delay::Delay;
-pub use gpio::OutputPin;
+pub use gpio::{InputPin, OutputPin};
 pub use i2c::I2c;
 pub use spi::Spi;
 
@@ -164,7 +162,6 @@ use std::{cell::RefCell, sync::Mutex};
 
 /// State tracker for each pin on the FTDI chip.
 #[derive(Debug, Clone, Copy)]
-#[cfg_attr(not(feature = "unproven"), allow(dead_code))]
 enum PinUse {
     I2c,
     Spi,
@@ -414,7 +411,6 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    #[cfg(feature = "unproven")]
     pub fn adi0(&self) -> Result<InputPin<Device>, Error<E>> {
         InputPin::new(&self.mtx, 0)
     }
@@ -433,7 +429,6 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    #[cfg(feature = "unproven")]
     pub fn adi1(&self) -> Result<InputPin<Device>, Error<E>> {
         InputPin::new(&self.mtx, 1)
     }
@@ -452,7 +447,6 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    #[cfg(feature = "unproven")]
     pub fn adi2(&self) -> Result<InputPin<Device>, Error<E>> {
         InputPin::new(&self.mtx, 2)
     }
@@ -471,7 +465,6 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    #[cfg(feature = "unproven")]
     pub fn adi3(&self) -> Result<InputPin<Device>, Error<E>> {
         InputPin::new(&self.mtx, 3)
     }
@@ -490,7 +483,6 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    #[cfg(feature = "unproven")]
     pub fn adi4(&self) -> Result<InputPin<Device>, Error<E>> {
         InputPin::new(&self.mtx, 4)
     }
@@ -509,7 +501,6 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    #[cfg(feature = "unproven")]
     pub fn adi5(&self) -> Result<InputPin<Device>, Error<E>> {
         InputPin::new(&self.mtx, 5)
     }
@@ -528,7 +519,6 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    #[cfg(feature = "unproven")]
     pub fn adi6(&self) -> Result<InputPin<Device>, Error<E>> {
         InputPin::new(&self.mtx, 6)
     }
@@ -547,7 +537,6 @@ where
     /// # Panics
     ///
     /// Panics if the pin is already in-use.
-    #[cfg(feature = "unproven")]
     pub fn adi7(&self) -> Result<InputPin<Device>, Error<E>> {
         InputPin::new(&self.mtx, 7)
     }

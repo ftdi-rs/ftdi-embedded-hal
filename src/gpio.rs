@@ -86,10 +86,9 @@ where
 ///
 /// This is created by calling [`FtHal::adi0`] - [`FtHal::adi7`].
 ///
-/// [`FtHal::ad0`]: crate::FtHal::adi0
-/// [`FtHal::ad7`]: crate::FtHal::adi7
+/// [`FtHal::adi0`]: crate::FtHal::adi0
+/// [`FtHal::adi7`]: crate::FtHal::adi7
 #[derive(Debug)]
-#[cfg(feature = "unproven")]
 pub struct InputPin<'a, Device: MpsseCmdExecutor> {
     /// Parent FTDI device.
     mtx: &'a Mutex<RefCell<FtInner<Device>>>,
@@ -97,7 +96,6 @@ pub struct InputPin<'a, Device: MpsseCmdExecutor> {
     idx: u8,
 }
 
-#[cfg(feature = "unproven")]
 impl<'a, Device, E> InputPin<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
@@ -132,7 +130,6 @@ where
     }
 }
 
-#[cfg(feature = "unproven")]
 impl<'a, Device: MpsseCmdExecutor> InputPin<'a, Device> {
     /// Convert the GPIO pin index to a pin mask
     pub(crate) fn mask(&self) -> u8 {
@@ -140,7 +137,6 @@ impl<'a, Device: MpsseCmdExecutor> InputPin<'a, Device> {
     }
 }
 
-#[cfg(feature = "unproven")]
 impl<'a, Device, E> embedded_hal::digital::v2::InputPin for InputPin<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
