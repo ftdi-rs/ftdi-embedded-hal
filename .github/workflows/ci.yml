@@ -20,7 +20,6 @@ jobs:
         with:
           toolchain: stable
       - run: RUSTFLAGS="-D warnings" cargo build
-      - run: RUSTFLAGS="-D warnings" cargo build --features unproven
 
   examples:
     name: Cargo Examples
@@ -42,7 +41,6 @@ jobs:
             sudo apt-get install -y libftdi1 libftdi1-dev pkg-config
           fi
           RUSTFLAGS="-D warnings" cargo build --features ${{ matrix.features }} --examples
-          RUSTFLAGS="-D warnings" cargo build --features ${{ matrix.features }},unproven --examples
 
   test:
     name: Cargo Test
@@ -63,7 +61,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y libftdi1 libftdi1-dev pkg-config
           fi
-          RUSTFLAGS="-D warnings" cargo test --features ${{ matrix.features }},unproven
+          RUSTFLAGS="-D warnings" cargo test --features ${{ matrix.features }}
 
   doc:
     name: Cargo Doc
