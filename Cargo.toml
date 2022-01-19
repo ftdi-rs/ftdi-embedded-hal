@@ -1,7 +1,7 @@
 [package]
 name = "ftdi-embedded-hal"
-version = "0.10.0"
-authors = ["Alex M. <alexmgit@protonmail.com>"]
+version = "0.11.0"
+authors = ["Alex Martens <alex@thinglab.org>"]
 description = "embedded-hal implementation for FTDI USB devices."
 keywords = ["ftdi", "usb", "io", "hal"]
 categories = ["embedded"]

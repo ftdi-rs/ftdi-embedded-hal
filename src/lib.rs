@@ -18,13 +18,13 @@
 //!
 //! ```toml
 //! [dependencies.ftdi-embedded-hal]
-//! version = "0.10"
+//! version = "0.11"
 //! features = ["libftd2xx-static"]
 //! ```
 //!
 //! # Limitations
 //!
-//! * Limited trait support: SPI, I2C, Delay, and OutputPin traits are implemented.
+//! * Limited trait support: SPI, I2C, Delay, InputPin, and OutputPin traits are implemented.
 //! * Limited device support: FT232H, FT2232H, FT4232H.
 //! * Limited SPI modes support: MODE0, MODE2.
 //!
