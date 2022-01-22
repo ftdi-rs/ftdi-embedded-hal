@@ -19,7 +19,7 @@
 //! ```toml
 //! [dependencies.ftdi-embedded-hal]
 //! version = "0.11"
-//! features = ["libftd2xx-static"]
+//! features = ["libftd2xx", "libftd2xx-static"]
 //! ```
 //!
 //! # Limitations
@@ -144,6 +144,12 @@
 
 pub use embedded_hal;
 pub use ftdi_mpsse;
+
+#[cfg(feature = "ftdi")]
+pub use ftdi;
+
+#[cfg(feature = "libftd2xx")]
+pub use libftd2xx;
 
 mod delay;
 mod error;
