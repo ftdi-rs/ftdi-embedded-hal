@@ -14,16 +14,16 @@ jobs:
   build:
     name: Cargo Build
     runs-on: ubuntu-latest
+    env: {"RUSTFLAGS": "-D warnings"}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      - run: RUSTFLAGS="-D warnings" cargo build
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build
 
   examples:
     name: Cargo Examples
     runs-on: ubuntu-latest
+    env: {"RUSTFLAGS": "-D warnings"}
     strategy:
       matrix:
         features:
@@ -31,20 +31,19 @@ jobs:
           - ftdi
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
       - run: |
           if ${{ matrix.features == 'ftdi' }}
           then
             sudo apt-get update
             sudo apt-get install -y libftdi1 libftdi1-dev pkg-config
           fi
-          RUSTFLAGS="-D warnings" cargo build --features ${{ matrix.features }} --examples
+          cargo build --features ${{ matrix.features }} --examples
 
   test:
     name: Cargo Test
     runs-on: ubuntu-latest
+    env: {"RUSTFLAGS": "-D warnings"}
     strategy:
       matrix:
         features:
@@ -52,51 +51,43 @@ jobs:
           - ftdi
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
       - run: |
           if ${{ matrix.features == 'ftdi' }}
           then
             sudo apt-get update
             sudo apt-get install -y libftdi1 libftdi1-dev pkg-config
           fi
-          RUSTFLAGS="-D warnings" cargo test --features ${{ matrix.features }}
+          cargo test --features ${{ matrix.features }}
 
   doc:
     name: Cargo Doc
     runs-on: ubuntu-latest
+    env: {"RUSTDOCFLAGS": "-D warnings"}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      - run: RUSTDOCFLAGS="-D warnings" cargo doc --all-features
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo doc --all-features
 
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
           components: clippy
-      - uses: actions-rs/clippy-check@v1.0.7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features
+      - run: cargo clippy --all-features -- --deny warnings
 
   format:
     name: Cargo Fmt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
           components: rustfmt
-      - run: cargo fmt -- --check
+      - run: cargo +nightly fmt -- --check
 
   release:
     name: crates.io release
@@ -105,9 +96,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
       - run: cargo publish --token ${CRATES_IO_TOKEN}
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
