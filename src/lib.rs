@@ -164,7 +164,7 @@ pub use i2c::I2c;
 pub use spi::Spi;
 
 use ftdi_mpsse::{MpsseCmdExecutor, MpsseSettings};
-use std::{cell::RefCell, sync::Mutex};
+use std::sync::{Arc, Mutex};
 
 /// State tracker for each pin on the FTDI chip.
 #[derive(Debug, Clone, Copy)]
@@ -228,7 +228,7 @@ impl<Device: MpsseCmdExecutor> From<Device> for FtInner<Device> {
 /// FTxxx device.
 #[derive(Debug)]
 pub struct FtHal<Device: MpsseCmdExecutor> {
-    mtx: Mutex<RefCell<FtInner<Device>>>,
+    mtx: Arc<Mutex<FtInner<Device>>>,
 }
 
 impl<Device, E> FtHal<Device>
@@ -333,7 +333,7 @@ where
         device.init(mpsse_settings)?;
 
         Ok(FtHal {
-            mtx: Mutex::new(RefCell::new(device.into())),
+            mtx: Arc::new(Mutex::new(device.into())),
         })
     }
 }

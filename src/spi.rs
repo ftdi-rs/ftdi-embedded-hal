@@ -2,8 +2,7 @@ use crate::error::Error;
 use crate::{FtInner, PinUse};
 use embedded_hal::spi::Polarity;
 use ftdi_mpsse::{ClockData, ClockDataOut, MpsseCmdBuilder, MpsseCmdExecutor};
-use std::result::Result;
-use std::{cell::RefCell, sync::Mutex};
+use std::sync::{Arc, Mutex};
 
 /// FTDI SPI interface.
 ///
@@ -13,7 +12,7 @@ use std::{cell::RefCell, sync::Mutex};
 #[derive(Debug)]
 pub struct Spi<'a, Device: MpsseCmdExecutor> {
     /// Parent FTDI device.
-    mtx: &'a Mutex<RefCell<FtInner<Device>>>,
+    mtx: &'a Arc<Mutex<FtInner<Device>>>,
     /// MPSSE command used to clock data in and out simultaneously.
     ///
     /// This is set by [`Spi::set_clock_polarity`].
@@ -30,23 +29,22 @@ where
     E: std::error::Error,
     Error<E>: From<E>,
 {
-    pub(crate) fn new(mtx: &Mutex<RefCell<FtInner<Device>>>) -> Result<Spi<Device>, Error<E>> {
-        let lock = mtx.lock().expect("Failed to aquire FTDI mutex");
-        let mut inner = lock.borrow_mut();
-        inner.allocate_pin(0, PinUse::Spi);
-        inner.allocate_pin(1, PinUse::Spi);
-        inner.allocate_pin(2, PinUse::Spi);
+    pub(crate) fn new(mtx: &Arc<Mutex<FtInner<Device>>>) -> Result<Spi<Device>, Error<E>> {
+        let mut lock = mtx.lock().expect("Failed to aquire FTDI mutex");
+        lock.allocate_pin(0, PinUse::Spi);
+        lock.allocate_pin(1, PinUse::Spi);
+        lock.allocate_pin(2, PinUse::Spi);
 
         // clear direction of first 3 pins
-        inner.direction &= !0x07;
+        lock.direction &= !0x07;
         // set SCK (AD0) and MOSI (AD1) as output pins
-        inner.direction |= 0x03;
+        lock.direction |= 0x03;
 
         // set GPIO pins to new state
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
-            .set_gpio_lower(inner.value, inner.direction)
+            .set_gpio_lower(lock.value, lock.direction)
             .send_immediate();
-        inner.ft.send(cmd.as_slice())?;
+        lock.ft.send(cmd.as_slice())?;
 
         Ok(Spi {
             mtx,
@@ -101,10 +99,9 @@ where
             .clock_data_out(self.clk_out, words)
             .send_immediate();
 
-        let lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
-        let mut inner = lock.borrow_mut();
+        let mut lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
 
-        inner.ft.send(cmd.as_slice())?;
+        lock.ft.send(cmd.as_slice())?;
 
         Ok(())
     }
@@ -123,10 +120,10 @@ where
             .clock_data(self.clk, words)
             .send_immediate();
 
-        let lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
-        let mut inner = lock.borrow_mut();
-        inner.ft.send(cmd.as_slice())?;
-        inner.ft.recv(words)?;
+        let mut lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
+
+        lock.ft.send(cmd.as_slice())?;
+        lock.ft.recv(words)?;
 
         Ok(words)
     }
@@ -146,10 +143,9 @@ where
             .clock_data(self.clk, &buf)
             .send_immediate();
 
-        let lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
-        let mut inner = lock.borrow_mut();
+        let mut lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
 
-        match inner.ft.xfer(cmd.as_slice(), &mut buf) {
+        match lock.ft.xfer(cmd.as_slice(), &mut buf) {
             Ok(()) => Ok(buf[0]),
             Err(e) => Err(nb::Error::Other(Error::from(e))),
         }
@@ -160,10 +156,9 @@ where
             .clock_data_out(self.clk_out, &[byte])
             .send_immediate();
 
-        let lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
-        let mut inner = lock.borrow_mut();
+        let mut lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
 
-        match inner.ft.send(cmd.as_slice()) {
+        match lock.ft.send(cmd.as_slice()) {
             Ok(()) => Ok(()),
             Err(e) => Err(nb::Error::Other(Error::from(e))),
         }

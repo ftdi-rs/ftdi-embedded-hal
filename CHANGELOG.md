@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added re-exports for `libftd2xx` and `ftdi` when the respective feature is used.
 
+### Changed
+- Changed the internal shared FTDI type from `Mutex<RefCell<FtInner<Device>>>` to `Arc<Mutex<FtInner<Device>>>`.
+
 ## [0.11.0] - 2022-01-18
 ### Added
 - Added support for input pins.

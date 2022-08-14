@@ -1,8 +1,7 @@
 use crate::error::Error;
 use crate::{FtInner, PinUse};
 use ftdi_mpsse::{MpsseCmdBuilder, MpsseCmdExecutor};
-use std::result::Result;
-use std::{cell::RefCell, sync::Mutex};
+use std::sync::{Arc, Mutex};
 
 /// FTDI output pin.
 ///
@@ -13,7 +12,7 @@ use std::{cell::RefCell, sync::Mutex};
 #[derive(Debug)]
 pub struct OutputPin<'a, Device: MpsseCmdExecutor> {
     /// Parent FTDI device.
-    mtx: &'a Mutex<RefCell<FtInner<Device>>>,
+    mtx: &'a Arc<Mutex<FtInner<Device>>>,
     /// GPIO pin index.  0-7 for the FT232H.
     idx: u8,
 }
@@ -25,34 +24,33 @@ where
     Error<E>: From<E>,
 {
     pub(crate) fn new(
-        mtx: &'a Mutex<RefCell<FtInner<Device>>>,
+        mtx: &'a Arc<Mutex<FtInner<Device>>>,
         idx: u8,
     ) -> Result<OutputPin<'a, Device>, Error<E>> {
-        let lock = mtx.lock().expect("Failed to aquire FTDI mutex");
-        let mut inner = lock.borrow_mut();
-        inner.direction |= 1 << idx;
-        inner.allocate_pin(idx, PinUse::Output);
+        let mut lock = mtx.lock().expect("Failed to aquire FTDI mutex");
+
+        lock.direction |= 1 << idx;
+        lock.allocate_pin(idx, PinUse::Output);
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
-            .set_gpio_lower(inner.value, inner.direction)
+            .set_gpio_lower(lock.value, lock.direction)
             .send_immediate();
-        inner.ft.send(cmd.as_slice())?;
+        lock.ft.send(cmd.as_slice())?;
         Ok(OutputPin { mtx, idx })
     }
 
     pub(crate) fn set(&self, state: bool) -> Result<(), Error<E>> {
-        let lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
-        let mut inner = lock.borrow_mut();
+        let mut lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
 
         if state {
-            inner.value |= self.mask();
+            lock.value |= self.mask();
         } else {
-            inner.value &= !self.mask();
+            lock.value &= !self.mask();
         };
 
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
-            .set_gpio_lower(inner.value, inner.direction)
+            .set_gpio_lower(lock.value, lock.direction)
             .send_immediate();
-        inner.ft.send(cmd.as_slice())?;
+        lock.ft.send(cmd.as_slice())?;
 
         Ok(())
     }
@@ -91,7 +89,7 @@ where
 #[derive(Debug)]
 pub struct InputPin<'a, Device: MpsseCmdExecutor> {
     /// Parent FTDI device.
-    mtx: &'a Mutex<RefCell<FtInner<Device>>>,
+    mtx: &'a Arc<Mutex<FtInner<Device>>>,
     /// GPIO pin index.  0-7 for the FT232H.
     idx: u8,
 }
@@ -103,28 +101,27 @@ where
     Error<E>: From<E>,
 {
     pub(crate) fn new(
-        mtx: &'a Mutex<RefCell<FtInner<Device>>>,
+        mtx: &'a Arc<Mutex<FtInner<Device>>>,
         idx: u8,
     ) -> Result<InputPin<'a, Device>, Error<E>> {
-        let lock = mtx.lock().expect("Failed to aquire FTDI mutex");
-        let mut inner = lock.borrow_mut();
-        inner.direction &= !(1 << idx);
-        inner.allocate_pin(idx, PinUse::Input);
+        let mut lock = mtx.lock().expect("Failed to aquire FTDI mutex");
+
+        lock.direction &= !(1 << idx);
+        lock.allocate_pin(idx, PinUse::Input);
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
-            .set_gpio_lower(inner.value, inner.direction)
+            .set_gpio_lower(lock.value, lock.direction)
             .send_immediate();
-        inner.ft.send(cmd.as_slice())?;
+        lock.ft.send(cmd.as_slice())?;
         Ok(InputPin { mtx, idx })
     }
 
     pub(crate) fn get(&self) -> Result<bool, Error<E>> {
-        let lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
-        let mut inner = lock.borrow_mut();
+        let mut lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
 
         let mut buffer = [0u8; 1];
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new().gpio_lower().send_immediate();
-        inner.ft.send(cmd.as_slice())?;
-        inner.ft.recv(&mut buffer)?;
+        lock.ft.send(cmd.as_slice())?;
+        lock.ft.recv(&mut buffer)?;
 
         Ok((buffer[0] & self.mask()) != 0)
     }
