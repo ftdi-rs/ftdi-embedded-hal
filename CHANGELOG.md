@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added re-exports for `libftd2xx` and `ftdi` when the respective feature is used.
+- Added `embedded-hal` version `1.0.0-alpha.8` trait implementations for:
+  - GPIOs
+  - Delay
+  - SPI
+
+### Changed
+- Changed the `embedded-hal` version `0.2` re-export name from `embedded-hal` to
+  `eh0` to differentiate from `embedded-hal` version `1.0.0-alpha.8`.
 
 ## [0.11.0] - 2022-01-18
 ### Added

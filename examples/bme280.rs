@@ -7,24 +7,22 @@
 //! * https://www.adafruit.com/product/4399
 //! * https://www.adafruit.com/product/4472
 
-use embedded_hal::prelude::*;
+use eh0::prelude::*;
 use ftdi_embedded_hal as hal;
 
-#[cfg(all(feature = "ftdi", feature = "libftd2xx"))]
-compile_error!("features 'ftdi' and 'libftd2xx' cannot be enabled at the same time");
-
-#[cfg(not(any(feature = "ftdi", feature = "libftd2xx")))]
-compile_error!("one of features 'ftdi' and 'libftd2xx' shall be enabled");
-
 fn main() {
-    #[cfg(feature = "libftd2xx")]
-    let device: libftd2xx::Ft232h = libftd2xx::Ftdi::new().unwrap().try_into().unwrap();
-
-    #[cfg(feature = "ftdi")]
-    let device = ftdi::find_by_vid_pid(0x0403, 0x6014)
-        .interface(ftdi::Interface::A)
-        .open()
-        .unwrap();
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "ftdi")] {
+            let device = ftdi::find_by_vid_pid(0x0403, 0x6014)
+            .interface(ftdi::Interface::A)
+            .open()
+            .unwrap();
+        } else if #[cfg(feature = "libftd2xx")] {
+            let device: libftd2xx::Ft232h = libftd2xx::Ftdi::new().unwrap().try_into().unwrap();
+        } else {
+            compile_error!("one of features 'ftdi' and 'libftd2xx' shall be enabled");
+        }
+    }
 
     let hal = hal::FtHal::init_default(device).unwrap();
     let mut i2c = hal.i2c().unwrap();
