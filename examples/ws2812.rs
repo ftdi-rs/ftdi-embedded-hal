@@ -1,23 +1,21 @@
-use embedded_hal::blocking::spi::Write;
+use eh0::blocking::spi::Write;
 use ftdi_embedded_hal as hal;
 use std::thread::sleep;
 use std::time::Duration;
 
-#[cfg(all(feature = "ftdi", feature = "libftd2xx"))]
-compile_error!("features 'ftdi' and 'libftd2xx' cannot be enabled at the same time");
-
-#[cfg(not(any(feature = "ftdi", feature = "libftd2xx")))]
-compile_error!("one of features 'ftdi' and 'libftdi2xx' shall be enabled");
-
 fn main() {
-    #[cfg(feature = "libftd2xx")]
-    let device = libftd2xx::Ft2232h::with_description("Dual RS232-HS A").unwrap();
-
-    #[cfg(feature = "ftdi")]
-    let device = ftdi::find_by_vid_pid(0x0403, 0x6010)
-        .interface(ftdi::Interface::A)
-        .open()
-        .unwrap();
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "ftdi")] {
+            let device = ftdi::find_by_vid_pid(0x0403, 0x6010)
+                .interface(ftdi::Interface::A)
+                .open()
+                .unwrap();
+        } else if #[cfg(feature = "libftd2xx")] {
+            let device = libftd2xx::Ft2232h::with_description("Dual RS232-HS A").unwrap();
+        } else {
+            compile_error!("one of features 'ftdi' and 'libftd2xx' shall be enabled");
+        }
+    }
 
     let hal = hal::FtHal::init_freq(device, 3_000_000).unwrap();
     let mut spi = hal.spi().unwrap();

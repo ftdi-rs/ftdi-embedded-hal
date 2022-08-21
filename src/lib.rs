@@ -142,7 +142,8 @@
 #![forbid(missing_docs)]
 #![forbid(unsafe_code)]
 
-pub use embedded_hal;
+pub use eh0;
+pub use eh1;
 pub use ftdi_mpsse;
 
 #[cfg(feature = "ftdi")]
@@ -161,10 +162,10 @@ use crate::error::Error;
 pub use delay::Delay;
 pub use gpio::{InputPin, OutputPin};
 pub use i2c::I2c;
-pub use spi::Spi;
+pub use spi::{Spi, SpiDevice};
 
 use ftdi_mpsse::{MpsseCmdExecutor, MpsseSettings};
-use std::{cell::RefCell, sync::Mutex};
+use std::sync::{Arc, Mutex};
 
 /// State tracker for each pin on the FTDI chip.
 #[derive(Debug, Clone, Copy)]
@@ -228,7 +229,7 @@ impl<Device: MpsseCmdExecutor> From<Device> for FtInner<Device> {
 /// FTxxx device.
 #[derive(Debug)]
 pub struct FtHal<Device: MpsseCmdExecutor> {
-    mtx: Mutex<RefCell<FtInner<Device>>>,
+    mtx: Arc<Mutex<FtInner<Device>>>,
 }
 
 impl<Device, E> FtHal<Device>
@@ -333,7 +334,7 @@ where
         device.init(mpsse_settings)?;
 
         Ok(FtHal {
-            mtx: Mutex::new(RefCell::new(device.into())),
+            mtx: Arc::new(Mutex::new(device.into())),
         })
     }
 }
@@ -370,6 +371,36 @@ where
     /// ```
     pub fn spi(&self) -> Result<Spi<Device>, Error<E>> {
         Spi::new(&self.mtx)
+    }
+
+    /// Aquire the SPI peripheral with a chip select pin.
+    ///
+    /// This is specific to embedded-hal version 1.
+    ///
+    /// Pin assignments:
+    /// * AD0 => SCK
+    /// * AD1 => MOSI
+    /// * AD2 => MISO
+    ///
+    /// # Panics
+    ///
+    /// Panics if pin 0, 1, 2 or the CS pin are already in use.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use ftdi_embedded_hal as hal;
+    ///
+    /// # #[cfg(feature = "libftd2xx")]
+    /// # {
+    /// let device = libftd2xx::Ft2232h::with_description("Dual RS232-HS A")?;
+    /// let hal = hal::FtHal::init_freq(device, 3_000_000)?;
+    /// let spi = hal.spi_device(3)?;
+    /// # }
+    /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn spi_device(&self, cs_idx: u8) -> Result<SpiDevice<Device>, Error<E>> {
+        SpiDevice::new(&self.mtx, cs_idx)
     }
 
     /// Aquire the I2C peripheral for the FT232H.

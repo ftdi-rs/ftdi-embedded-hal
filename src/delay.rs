@@ -1,4 +1,5 @@
-//! Implementation of the [`embedded_hal::blocking::delay`] traits.
+//! Implementation of the [`eh0::blocking::delay`] and [`eh1::delay::blocking`]
+//! traits.
 
 /// Delay structure.
 ///
@@ -31,15 +32,29 @@ impl Default for Delay {
     }
 }
 
-macro_rules! impl_delay_for {
+impl eh1::delay::blocking::DelayUs for Delay {
+    type Error = std::convert::Infallible;
+
+    fn delay_us(&mut self, us: u32) -> Result<(), Self::Error> {
+        std::thread::sleep(std::time::Duration::from_micros(us.into()));
+        Ok(())
+    }
+
+    fn delay_ms(&mut self, ms: u32) -> Result<(), Self::Error> {
+        std::thread::sleep(std::time::Duration::from_millis(ms.into()));
+        Ok(())
+    }
+}
+
+macro_rules! impl_eh0_delay_for {
     ($UXX:ty) => {
-        impl embedded_hal::blocking::delay::DelayMs<$UXX> for Delay {
+        impl eh0::blocking::delay::DelayMs<$UXX> for Delay {
             fn delay_ms(&mut self, ms: $UXX) {
                 std::thread::sleep(std::time::Duration::from_millis(ms.into()))
             }
         }
 
-        impl embedded_hal::blocking::delay::DelayUs<$UXX> for Delay {
+        impl eh0::blocking::delay::DelayUs<$UXX> for Delay {
             fn delay_us(&mut self, us: $UXX) {
                 std::thread::sleep(std::time::Duration::from_micros(us.into()))
             }
@@ -47,7 +62,7 @@ macro_rules! impl_delay_for {
     };
 }
 
-impl_delay_for!(u8);
-impl_delay_for!(u16);
-impl_delay_for!(u32);
-impl_delay_for!(u64);
+impl_eh0_delay_for!(u8);
+impl_eh0_delay_for!(u16);
+impl_eh0_delay_for!(u32);
+impl_eh0_delay_for!(u64);

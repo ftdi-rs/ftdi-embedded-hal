@@ -4,23 +4,23 @@ use spi_memory::series25::Flash;
 use std::thread::sleep;
 use std::time::Duration;
 
-#[cfg(all(feature = "ftdi", feature = "libftd2xx"))]
-compile_error!("features 'ftdi' and 'libftd2xx' cannot be enabled at the same time");
-
-#[cfg(not(any(feature = "ftdi", feature = "libftd2xx")))]
-compile_error!("one of features 'ftdi' and 'libftd2xx' shall be enabled");
-
 const LINE: u32 = 0x10;
 
 fn main() {
-    #[cfg(feature = "ftdi")]
-    let device = ftdi::find_by_vid_pid(0x0403, 0x6014)
-        .interface(ftdi::Interface::A)
-        .open()
-        .unwrap();
-
-    #[cfg(feature = "libftd2xx")]
-    let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "ftdi")] {
+            let device = ftdi::find_by_vid_pid(0x0403, 0x6014)
+                .interface(ftdi::Interface::A)
+                .open()
+                .unwrap();
+            let data: [u8; 8] = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
+        } else if #[cfg(feature = "libftd2xx")] {
+            let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
+            let data: [u8; 8] = [0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70];
+        } else {
+            compile_error!("one of features 'ftdi' and 'libftd2xx' shall be enabled");
+        }
+    }
 
     let hal = hal::FtHal::init_freq(device, 1_000_000).unwrap();
     let spi = hal.spi().unwrap();
@@ -30,11 +30,6 @@ fn main() {
     let mut flash = Flash::init(spi, ncs).unwrap();
     let id = flash.read_jedec_id().unwrap();
     println!("JEDEC ID: {:?}", id);
-
-    #[cfg(feature = "libftd2xx")]
-    let data: [u8; 8] = [0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70];
-    #[cfg(feature = "ftdi")]
-    let data: [u8; 8] = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
 
     let addrs: [u32; 5] = [0, LINE, 2 * LINE, 3 * LINE, 4 * LINE];
     let zero: [u8; 8] = [0; 8];
