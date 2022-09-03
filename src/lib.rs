@@ -18,7 +18,7 @@
 //!
 //! ```toml
 //! [dependencies.ftdi-embedded-hal]
-//! version = "0.11"
+//! version = "0.12.0"
 //! features = ["libftd2xx", "libftd2xx-static"]
 //! ```
 //!
