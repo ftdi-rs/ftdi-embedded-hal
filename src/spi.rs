@@ -221,7 +221,7 @@ where
     type Error = Error<E>;
 }
 
-impl<'a, Device, E> eh1::spi::blocking::SpiBusFlush for Spi<'a, Device>
+impl<'a, Device, E> eh1::spi::SpiBusFlush for Spi<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -232,7 +232,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh1::spi::blocking::SpiBusWrite<u8> for Spi<'a, Device>
+impl<'a, Device, E> eh1::spi::SpiBusWrite<u8> for Spi<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -250,7 +250,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh1::spi::blocking::SpiBusRead<u8> for Spi<'a, Device>
+impl<'a, Device, E> eh1::spi::SpiBusRead<u8> for Spi<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -270,7 +270,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh1::spi::blocking::SpiBus<u8> for Spi<'a, Device>
+impl<'a, Device, E> eh1::spi::SpiBus<u8> for Spi<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -302,7 +302,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh1::spi::nb::FullDuplex<u8> for Spi<'a, Device>
+impl<'a, Device, E> ehnb1::spi::FullDuplex<u8> for Spi<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -348,7 +348,7 @@ where
     type Error = Error<E>;
 }
 
-impl<'a, Device, E> eh1::spi::blocking::SpiBusFlush for SpiDeviceBus<'a, Device>
+impl<'a, Device, E> eh1::spi::SpiBusFlush for SpiDeviceBus<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -359,7 +359,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh1::spi::blocking::SpiBusRead<u8> for SpiDeviceBus<'a, Device>
+impl<'a, Device, E> eh1::spi::SpiBusRead<u8> for SpiDeviceBus<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -377,7 +377,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh1::spi::blocking::SpiBusWrite<u8> for SpiDeviceBus<'a, Device>
+impl<'a, Device, E> eh1::spi::SpiBusWrite<u8> for SpiDeviceBus<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -394,7 +394,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh1::spi::blocking::SpiBus<u8> for SpiDeviceBus<'a, Device>
+impl<'a, Device, E> eh1::spi::SpiBus<u8> for SpiDeviceBus<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -515,7 +515,7 @@ where
     type Error = Error<E>;
 }
 
-impl<'a, Device, E> eh1::spi::blocking::SpiDevice for SpiDevice<'a, Device>
+impl<'a, Device, E> eh1::spi::SpiDevice for SpiDevice<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -550,7 +550,7 @@ where
 
         // flush the bus
         {
-            use eh1::spi::blocking::SpiBusFlush;
+            use eh1::spi::SpiBusFlush;
             bus.flush()?;
         }
 

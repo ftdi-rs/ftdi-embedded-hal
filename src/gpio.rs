@@ -72,7 +72,7 @@ where
     type Error = Error<E>;
 }
 
-impl<'a, Device, E> eh1::digital::blocking::OutputPin for OutputPin<'a, Device>
+impl<'a, Device, E> eh1::digital::OutputPin for OutputPin<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -167,7 +167,7 @@ where
     type Error = Error<E>;
 }
 
-impl<'a, Device, E> eh1::digital::blocking::InputPin for InputPin<'a, Device>
+impl<'a, Device, E> eh1::digital::InputPin for InputPin<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
