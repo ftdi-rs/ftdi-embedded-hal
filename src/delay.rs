@@ -1,4 +1,4 @@
-//! Implementation of the [`eh0::blocking::delay`] and [`eh1::delay::blocking`]
+//! Implementation of the [`eh0::blocking::delay`] and [`eh1::delay`]
 //! traits.
 
 /// Delay structure.
@@ -32,7 +32,7 @@ impl Default for Delay {
     }
 }
 
-impl eh1::delay::blocking::DelayUs for Delay {
+impl eh1::delay::DelayUs for Delay {
     type Error = std::convert::Infallible;
 
     fn delay_us(&mut self, us: u32) -> Result<(), Self::Error> {
