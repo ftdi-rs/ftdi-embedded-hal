@@ -59,6 +59,6 @@ fn main() {
     while addr < 0x100 {
         flash.read(addr, &mut buf).unwrap();
         println!("{:02x}: {:02x?}", addr, buf);
-        addr += LINE as u32;
+        addr += LINE;
     }
 }

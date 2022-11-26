@@ -65,35 +65,37 @@ impl Default for Polarity {
 ///
 /// [`FtHal::spi`]: crate::FtHal::spi
 #[derive(Debug)]
-pub struct Spi<'a, Device: MpsseCmdExecutor> {
+pub struct Spi<Device: MpsseCmdExecutor> {
     /// Parent FTDI device.
-    mtx: &'a Arc<Mutex<FtInner<Device>>>,
+    mtx: Arc<Mutex<FtInner<Device>>>,
     /// SPI polarity
     pol: Polarity,
 }
 
-impl<'a, Device, E> Spi<'a, Device>
+impl<Device, E> Spi<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
     Error<E>: From<E>,
 {
-    pub(crate) fn new(mtx: &Arc<Mutex<FtInner<Device>>>) -> Result<Spi<Device>, Error<E>> {
-        let mut lock = mtx.lock().expect("Failed to aquire FTDI mutex");
-        lock.allocate_pin(0, PinUse::Spi);
-        lock.allocate_pin(1, PinUse::Spi);
-        lock.allocate_pin(2, PinUse::Spi);
+    pub(crate) fn new(mtx: Arc<Mutex<FtInner<Device>>>) -> Result<Spi<Device>, Error<E>> {
+        {
+            let mut lock = mtx.lock().expect("Failed to aquire FTDI mutex");
+            lock.allocate_pin(0, PinUse::Spi);
+            lock.allocate_pin(1, PinUse::Spi);
+            lock.allocate_pin(2, PinUse::Spi);
 
-        // clear direction of first 3 pins
-        lock.direction &= !0x07;
-        // set SCK (AD0) and MOSI (AD1) as output pins
-        lock.direction |= 0x03;
+            // clear direction of first 3 pins
+            lock.direction &= !0x07;
+            // set SCK (AD0) and MOSI (AD1) as output pins
+            lock.direction |= 0x03;
 
-        // set GPIO pins to new state
-        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
-            .set_gpio_lower(lock.value, lock.direction)
-            .send_immediate();
-        lock.ft.send(cmd.as_slice())?;
+            // set GPIO pins to new state
+            let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+                .set_gpio_lower(lock.value, lock.direction)
+                .send_immediate();
+            lock.ft.send(cmd.as_slice())?;
+        }
 
         Ok(Spi {
             mtx,
@@ -127,7 +129,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh0::blocking::spi::Write<u8> for Spi<'a, Device>
+impl<Device, E> eh0::blocking::spi::Write<u8> for Spi<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -147,7 +149,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh0::blocking::spi::Transfer<u8> for Spi<'a, Device>
+impl<Device, E> eh0::blocking::spi::Transfer<u8> for Spi<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -168,7 +170,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh0::spi::FullDuplex<u8> for Spi<'a, Device>
+impl<Device, E> eh0::spi::FullDuplex<u8> for Spi<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -212,7 +214,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh1::spi::ErrorType for Spi<'a, Device>
+impl<Device, E> eh1::spi::ErrorType for Spi<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -221,7 +223,7 @@ where
     type Error = Error<E>;
 }
 
-impl<'a, Device, E> eh1::spi::SpiBusFlush for Spi<'a, Device>
+impl<Device, E> eh1::spi::SpiBusFlush for Spi<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -232,7 +234,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh1::spi::SpiBusWrite<u8> for Spi<'a, Device>
+impl<Device, E> eh1::spi::SpiBusWrite<u8> for Spi<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -250,7 +252,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh1::spi::SpiBusRead<u8> for Spi<'a, Device>
+impl<Device, E> eh1::spi::SpiBusRead<u8> for Spi<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -270,7 +272,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh1::spi::SpiBus<u8> for Spi<'a, Device>
+impl<Device, E> eh1::spi::SpiBus<u8> for Spi<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -302,7 +304,7 @@ where
     }
 }
 
-impl<'a, Device, E> ehnb1::spi::FullDuplex<u8> for Spi<'a, Device>
+impl<Device, E> ehnb1::spi::FullDuplex<u8> for Spi<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -431,43 +433,45 @@ where
 ///
 /// [`FtHal::spi_device`]: crate::FtHal::spi_device
 #[derive(Debug)]
-pub struct SpiDevice<'a, Device: MpsseCmdExecutor> {
+pub struct SpiDevice<Device: MpsseCmdExecutor> {
     /// Parent FTDI device.
-    mtx: &'a Arc<Mutex<FtInner<Device>>>,
+    mtx: Arc<Mutex<FtInner<Device>>>,
     /// SPI polarity
     pol: Polarity,
     /// Chip select pin index.  0-7 for the FT232H.
     cs_idx: u8,
 }
 
-impl<'a, Device, E> SpiDevice<'a, Device>
+impl<Device, E> SpiDevice<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
     Error<E>: From<E>,
 {
     pub(crate) fn new(
-        mtx: &'a Arc<Mutex<FtInner<Device>>>,
+        mtx: Arc<Mutex<FtInner<Device>>>,
         cs_idx: u8,
     ) -> Result<SpiDevice<Device>, Error<E>> {
-        let mut lock = mtx.lock().expect("Failed to aquire FTDI mutex");
-        lock.allocate_pin(0, PinUse::Spi);
-        lock.allocate_pin(1, PinUse::Spi);
-        lock.allocate_pin(2, PinUse::Spi);
-        lock.allocate_pin(cs_idx, PinUse::Output);
+        {
+            let mut lock = mtx.lock().expect("Failed to aquire FTDI mutex");
+            lock.allocate_pin(0, PinUse::Spi);
+            lock.allocate_pin(1, PinUse::Spi);
+            lock.allocate_pin(2, PinUse::Spi);
+            lock.allocate_pin(cs_idx, PinUse::Output);
 
-        let cs_mask: u8 = 1 << cs_idx;
+            let cs_mask: u8 = 1 << cs_idx;
 
-        // clear direction of first 3 pins and CS
-        lock.direction &= !(0x07 | cs_mask);
-        // set SCK (AD0) and MOSI (AD1), and CS as output pins
-        lock.direction |= 0x03 | cs_mask;
+            // clear direction of first 3 pins and CS
+            lock.direction &= !(0x07 | cs_mask);
+            // set SCK (AD0) and MOSI (AD1), and CS as output pins
+            lock.direction |= 0x03 | cs_mask;
 
-        // set GPIO pins to new state
-        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
-            .set_gpio_lower(lock.value, lock.direction)
-            .send_immediate();
-        lock.ft.send(cmd.as_slice())?;
+            // set GPIO pins to new state
+            let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+                .set_gpio_lower(lock.value, lock.direction)
+                .send_immediate();
+            lock.ft.send(cmd.as_slice())?;
+        }
 
         Ok(Self {
             mtx,
@@ -506,7 +510,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh1::spi::ErrorType for SpiDevice<'a, Device>
+impl<'a, Device, E> eh1::spi::ErrorType for &'a SpiDevice<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -515,7 +519,7 @@ where
     type Error = Error<E>;
 }
 
-impl<'a, Device, E> eh1::spi::SpiDevice for SpiDevice<'a, Device>
+impl<'a, Device, E> eh1::spi::SpiDevice for &'a SpiDevice<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -542,7 +546,7 @@ where
         )?;
 
         // call f with an exclusive reference to the bus
-        let mut bus: SpiDeviceBus<Device> = SpiDeviceBus {
+        let mut bus: SpiDeviceBus<'a, Device> = SpiDeviceBus {
             lock,
             pol: self.pol,
         };

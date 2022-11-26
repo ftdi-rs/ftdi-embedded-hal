@@ -18,9 +18,9 @@ const BITS_OUT: ClockBitsOut = ClockBitsOut::MsbNeg;
 ///
 /// [`FtHal::i2c`]: crate::FtHal::i2c
 #[derive(Debug)]
-pub struct I2c<'a, Device: MpsseCmdExecutor> {
+pub struct I2c<Device: MpsseCmdExecutor> {
     /// Parent FTDI device.
-    mtx: &'a Arc<Mutex<FtInner<Device>>>,
+    mtx: Arc<Mutex<FtInner<Device>>>,
     /// Length of the start, repeated start, and stop conditions.
     ///
     /// The units for these are dimensionless number of MPSSE commands.
@@ -30,34 +30,36 @@ pub struct I2c<'a, Device: MpsseCmdExecutor> {
     fast: bool,
 }
 
-impl<'a, Device, E> I2c<'a, Device>
+impl<Device, E> I2c<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
     Error<E>: From<E>,
 {
-    pub(crate) fn new(mtx: &Arc<Mutex<FtInner<Device>>>) -> Result<I2c<Device>, Error<E>> {
-        let mut lock = mtx.lock().expect("Failed to aquire FTDI mutex");
+    pub(crate) fn new(mtx: Arc<Mutex<FtInner<Device>>>) -> Result<I2c<Device>, Error<E>> {
+        {
+            let mut lock = mtx.lock().expect("Failed to aquire FTDI mutex");
 
-        lock.allocate_pin(0, PinUse::I2c);
-        lock.allocate_pin(1, PinUse::I2c);
-        lock.allocate_pin(2, PinUse::I2c);
+            lock.allocate_pin(0, PinUse::I2c);
+            lock.allocate_pin(1, PinUse::I2c);
+            lock.allocate_pin(2, PinUse::I2c);
 
-        // clear direction and value of first 3 pins
+            // clear direction and value of first 3 pins
 
-        lock.direction &= !0x07;
-        lock.value &= !0x07;
-        // AD0: SCL
-        // AD1: SDA (master out)
-        // AD2: SDA (master in)
-        // pins are set as input (tri-stated) in idle mode
+            lock.direction &= !0x07;
+            lock.value &= !0x07;
+            // AD0: SCL
+            // AD1: SDA (master out)
+            // AD2: SDA (master in)
+            // pins are set as input (tri-stated) in idle mode
 
-        // set GPIO pins to new state
-        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
-            .set_gpio_lower(lock.value, lock.direction)
-            .enable_3phase_data_clocking()
-            .send_immediate();
-        lock.ft.send(cmd.as_slice())?;
+            // set GPIO pins to new state
+            let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+                .set_gpio_lower(lock.value, lock.direction)
+                .enable_3phase_data_clocking()
+                .send_immediate();
+            lock.ft.send(cmd.as_slice())?;
+        }
 
         Ok(I2c {
             mtx,
@@ -620,7 +622,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh0::blocking::i2c::Read for I2c<'a, Device>
+impl<Device, E> eh0::blocking::i2c::Read for I2c<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -637,7 +639,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh0::blocking::i2c::Write for I2c<'a, Device>
+impl<Device, E> eh0::blocking::i2c::Write for I2c<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -654,7 +656,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh0::blocking::i2c::WriteRead for I2c<'a, Device>
+impl<Device, E> eh0::blocking::i2c::WriteRead for I2c<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
