@@ -29,7 +29,7 @@ fn main() {
 
     let mut flash = Flash::init(spi, ncs).unwrap();
     let id = flash.read_jedec_id().unwrap();
-    println!("JEDEC ID: {:?}", id);
+    println!("JEDEC ID: {id:?}");
 
     let addrs: [u32; 5] = [0, LINE, 2 * LINE, 3 * LINE, 4 * LINE];
     let zero: [u8; 8] = [0; 8];
@@ -58,7 +58,7 @@ fn main() {
     println!("Dump flash...");
     while addr < 0x100 {
         flash.read(addr, &mut buf).unwrap();
-        println!("{:02x}: {:02x?}", addr, buf);
+        println!("{addr:02x}: {buf:02x?}");
         addr += LINE;
     }
 }

@@ -202,12 +202,11 @@ struct FtInner<Device: MpsseCmdExecutor> {
 impl<Device: MpsseCmdExecutor> FtInner<Device> {
     /// Allocate a pin for a specific use.
     pub fn allocate_pin(&mut self, idx: u8, purpose: PinUse) {
-        assert!(idx < 8, "Pin index {} is out of range 0 - 7", idx);
+        assert!(idx < 8, "Pin index {idx} is out of range 0 - 7");
 
         if let Some(current) = self.pins[usize::from(idx)] {
             panic!(
-                "Unable to allocate pin {} for {}, pin is already allocated for {}",
-                idx, purpose, current
+                "Unable to allocate pin {idx} for {purpose}, pin is already allocated for {current}"
             );
         } else {
             self.pins[usize::from(idx)] = Some(purpose)
