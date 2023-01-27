@@ -24,7 +24,7 @@ fn main() {
 
     loop {
         let temperature = sensor.read_temperature().unwrap();
-        println!("Temperature: {}", temperature);
+        println!("Temperature: {temperature}");
         sleep(delay);
     }
 }
