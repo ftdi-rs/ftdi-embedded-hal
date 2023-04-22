@@ -11,6 +11,7 @@ pub enum Error<E: std::error::Error> {
     Io(io::Error),
     Backend(E),
 }
+
 /// Internal HAL errors
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ErrorKind {
@@ -34,6 +35,12 @@ impl ErrorKind {
             ErrorKind::GpioInvalidPin => "No such GPIO pin",
             ErrorKind::SpiModeNotSupported => "Mode not supported",
         }
+    }
+}
+
+impl<E: std::error::Error> eh1::digital::Error for Error<E> {
+    fn kind(&self) -> eh1::digital::ErrorKind {
+        eh1::digital::ErrorKind::Other
     }
 }
 

@@ -519,18 +519,58 @@ where
     type Error = Error<E>;
 }
 
+impl<'a, Device, E> eh1::spi::SpiDeviceRead for &'a SpiDevice<Device>
+where
+    Device: MpsseCmdExecutor<Error = E>,
+    E: std::error::Error,
+    Error<E>: From<E>,
+{
+    fn read_transaction(&mut self, operations: &mut [&mut [u8]]) -> Result<(), Self::Error> {
+        // lock the bus
+        let lock: MutexGuard<FtInner<Device>> =
+            self.mtx.lock().expect("Failed to aquire FTDI mutex");
+        let mut bus: SpiDeviceBus<'a, Device> = SpiDeviceBus {
+            lock,
+            pol: self.pol,
+        };
+        for op in operations {
+            eh1::spi::SpiBusRead::read(&mut bus, op)?;
+        }
+        Ok(())
+    }
+}
+
+impl<'a, Device, E> eh1::spi::SpiDeviceWrite for &'a SpiDevice<Device>
+where
+    Device: MpsseCmdExecutor<Error = E>,
+    E: std::error::Error,
+    Error<E>: From<E>,
+{
+    fn write_transaction(&mut self, operations: &[&[u8]]) -> Result<(), Self::Error> {
+        // lock the bus
+        let lock: MutexGuard<FtInner<Device>> =
+            self.mtx.lock().expect("Failed to aquire FTDI mutex");
+        let mut bus: SpiDeviceBus<'a, Device> = SpiDeviceBus {
+            lock,
+            pol: self.pol,
+        };
+        for op in operations {
+            eh1::spi::SpiBusWrite::write(&mut bus, op)?;
+        }
+        Ok(())
+    }
+}
+
 impl<'a, Device, E> eh1::spi::SpiDevice for &'a SpiDevice<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
     Error<E>: From<E>,
 {
-    type Bus = SpiDeviceBus<'a, Device>;
-
-    fn transaction<R>(
+    fn transaction(
         &mut self,
-        f: impl FnOnce(&mut Self::Bus) -> Result<R, <Self::Bus as eh1::spi::ErrorType>::Error>,
-    ) -> Result<R, Self::Error> {
+        operations: &mut [eh1::spi::Operation<'_, u8>],
+    ) -> Result<(), Self::Error> {
         // lock the bus
         let mut lock: MutexGuard<FtInner<Device>> =
             self.mtx.lock().expect("Failed to aquire FTDI mutex");
@@ -545,12 +585,27 @@ where
                 .as_slice(),
         )?;
 
-        // call f with an exclusive reference to the bus
         let mut bus: SpiDeviceBus<'a, Device> = SpiDeviceBus {
             lock,
             pol: self.pol,
         };
-        let bus_result = f(&mut bus);
+
+        for op in operations {
+            match op {
+                eh1::spi::Operation::Read(buffer) => {
+                    eh1::spi::SpiBusRead::read(&mut bus, buffer)?;
+                }
+                eh1::spi::Operation::Write(buffer) => {
+                    eh1::spi::SpiBusWrite::write(&mut bus, buffer)?;
+                }
+                eh1::spi::Operation::Transfer(read, write) => {
+                    eh1::spi::SpiBus::transfer(&mut bus, read, write)?;
+                }
+                eh1::spi::Operation::TransferInPlace(buffer) => {
+                    eh1::spi::SpiBus::transfer_in_place(&mut bus, buffer)?;
+                }
+            }
+        }
 
         // flush the bus
         {
@@ -570,6 +625,6 @@ where
         )?;
 
         // unlocking the bus is implicit via Drop
-        bus_result
+        Ok(())
     }
 }
