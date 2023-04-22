@@ -33,16 +33,12 @@ impl Default for Delay {
 }
 
 impl eh1::delay::DelayUs for Delay {
-    type Error = std::convert::Infallible;
-
-    fn delay_us(&mut self, us: u32) -> Result<(), Self::Error> {
-        std::thread::sleep(std::time::Duration::from_micros(us.into()));
-        Ok(())
+    fn delay_us(&mut self, us: u32) {
+        std::thread::sleep(std::time::Duration::from_micros(us.into()))
     }
 
-    fn delay_ms(&mut self, ms: u32) -> Result<(), Self::Error> {
-        std::thread::sleep(std::time::Duration::from_millis(ms.into()));
-        Ok(())
+    fn delay_ms(&mut self, ms: u32) {
+        std::thread::sleep(std::time::Duration::from_millis(ms.into()))
     }
 }
 

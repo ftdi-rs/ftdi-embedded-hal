@@ -17,8 +17,8 @@ default = []
 
 [dependencies]
 eh0 = { package = "embedded-hal", version = "0.2.7", features = ["unproven"] }
-eh1 = { package = "embedded-hal", version = "=1.0.0-alpha.9" }
-ehnb1 = { package = "embedded-hal-nb", version = "=1.0.0-alpha.1" }
+eh1 = { package = "embedded-hal", version = "=1.0.0-alpha.10" }
+ehnb1 = { package = "embedded-hal-nb", version = "=1.0.0-alpha.2" }
 ftdi = { version = "0.1.3", optional = true }
 ftdi-mpsse = "0.1"
 libftd2xx = { version = "0.32", optional = true }
