@@ -1,39 +1,29 @@
 use std::fmt;
 use std::io;
 
-/// HAL error type combines 3 types of errors:
-/// * internal HAL errors
-/// * I/O errors
-/// * FTDI drivers errors
+/// Error type.
 #[derive(Debug)]
 pub enum Error<E: std::error::Error> {
+    /// ftdi-embedded-hal implementation specific error.
     Hal(ErrorKind),
+    /// IO error.
     Io(io::Error),
+    /// Backend specific error.
     Backend(E),
 }
 
 /// Internal HAL errors
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[non_exhaustive]
 pub enum ErrorKind {
-    InvalidParams,
-    InvalidClock,
-    BusBusy,
+    /// No ACK from the I2C slave
     I2cNoAck,
-    GpioPinBusy,
-    GpioInvalidPin,
-    SpiModeNotSupported,
 }
 
 impl ErrorKind {
     fn as_str(&self) -> &str {
         match *self {
-            ErrorKind::InvalidParams => "Invalid input params",
-            ErrorKind::BusBusy => "Bus is busy",
-            ErrorKind::InvalidClock => "Clock is not valid",
             ErrorKind::I2cNoAck => "No ACK from slave",
-            ErrorKind::GpioPinBusy => "GPIO pin is already in use",
-            ErrorKind::GpioInvalidPin => "No such GPIO pin",
-            ErrorKind::SpiModeNotSupported => "Mode not supported",
         }
     }
 }
