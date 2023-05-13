@@ -18,7 +18,7 @@
 //!
 //! ```toml
 //! [dependencies.ftdi-embedded-hal]
-//! version = "0.15.0"
+//! version = "0.15.1"
 //! features = ["libftd2xx", "libftd2xx-static"]
 //! ```
 //!
@@ -158,7 +158,7 @@ mod gpio;
 mod i2c;
 mod spi;
 
-use crate::error::Error;
+pub use crate::error::{Error, ErrorKind};
 pub use delay::Delay;
 pub use gpio::{InputPin, OutputPin};
 pub use i2c::I2c;
