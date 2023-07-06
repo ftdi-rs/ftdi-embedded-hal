@@ -223,36 +223,7 @@ where
     type Error = Error<E>;
 }
 
-impl<Device, E> eh1::spi::SpiBusFlush for Spi<Device>
-where
-    Device: MpsseCmdExecutor<Error = E>,
-    E: std::error::Error,
-    Error<E>: From<E>,
-{
-    fn flush(&mut self) -> Result<(), Self::Error> {
-        Ok(())
-    }
-}
-
-impl<Device, E> eh1::spi::SpiBusWrite<u8> for Spi<Device>
-where
-    Device: MpsseCmdExecutor<Error = E>,
-    E: std::error::Error,
-    Error<E>: From<E>,
-{
-    fn write(&mut self, words: &[u8]) -> Result<(), Error<E>> {
-        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
-            .clock_data_out(self.pol.clk_out, words)
-            .send_immediate();
-
-        let mut lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
-        lock.ft.send(cmd.as_slice())?;
-
-        Ok(())
-    }
-}
-
-impl<Device, E> eh1::spi::SpiBusRead<u8> for Spi<Device>
+impl<Device, E> eh1::spi::SpiBus<u8> for Spi<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -270,14 +241,22 @@ where
 
         Ok(())
     }
-}
 
-impl<Device, E> eh1::spi::SpiBus<u8> for Spi<Device>
-where
-    Device: MpsseCmdExecutor<Error = E>,
-    E: std::error::Error,
-    Error<E>: From<E>,
-{
+    fn write(&mut self, words: &[u8]) -> Result<(), Error<E>> {
+        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+            .clock_data_out(self.pol.clk_out, words)
+            .send_immediate();
+
+        let mut lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
+        lock.ft.send(cmd.as_slice())?;
+
+        Ok(())
+    }
+
+    fn flush(&mut self) -> Result<(), Self::Error> {
+        Ok(())
+    }
+
     fn transfer_in_place(&mut self, words: &mut [u8]) -> Result<(), Error<E>> {
         let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
             .clock_data(self.pol.clk, words)
@@ -350,18 +329,7 @@ where
     type Error = Error<E>;
 }
 
-impl<'a, Device, E> eh1::spi::SpiBusFlush for SpiDeviceBus<'a, Device>
-where
-    Device: MpsseCmdExecutor<Error = E>,
-    E: std::error::Error,
-    Error<E>: From<E>,
-{
-    fn flush(&mut self) -> Result<(), Self::Error> {
-        Ok(())
-    }
-}
-
-impl<'a, Device, E> eh1::spi::SpiBusRead<u8> for SpiDeviceBus<'a, Device>
+impl<'a, Device, E> eh1::spi::SpiBus<u8> for SpiDeviceBus<'a, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -377,14 +345,7 @@ where
         )?;
         Ok(())
     }
-}
 
-impl<'a, Device, E> eh1::spi::SpiBusWrite<u8> for SpiDeviceBus<'a, Device>
-where
-    Device: MpsseCmdExecutor<Error = E>,
-    E: std::error::Error,
-    Error<E>: From<E>,
-{
     fn write(&mut self, words: &[u8]) -> Result<(), Self::Error> {
         self.lock.ft.send(
             MpsseCmdBuilder::new()
@@ -394,14 +355,11 @@ where
         )?;
         Ok(())
     }
-}
 
-impl<'a, Device, E> eh1::spi::SpiBus<u8> for SpiDeviceBus<'a, Device>
-where
-    Device: MpsseCmdExecutor<Error = E>,
-    E: std::error::Error,
-    Error<E>: From<E>,
-{
+    fn flush(&mut self) -> Result<(), Self::Error> {
+        Ok(())
+    }
+
     fn transfer(&mut self, read: &mut [u8], write: &[u8]) -> Result<(), Self::Error> {
         self.lock.ft.xfer(
             MpsseCmdBuilder::new()
@@ -519,48 +477,6 @@ where
     type Error = Error<E>;
 }
 
-impl<'a, Device, E> eh1::spi::SpiDeviceRead for &'a SpiDevice<Device>
-where
-    Device: MpsseCmdExecutor<Error = E>,
-    E: std::error::Error,
-    Error<E>: From<E>,
-{
-    fn read_transaction(&mut self, operations: &mut [&mut [u8]]) -> Result<(), Self::Error> {
-        // lock the bus
-        let lock: MutexGuard<FtInner<Device>> =
-            self.mtx.lock().expect("Failed to aquire FTDI mutex");
-        let mut bus: SpiDeviceBus<'a, Device> = SpiDeviceBus {
-            lock,
-            pol: self.pol,
-        };
-        for op in operations {
-            eh1::spi::SpiBusRead::read(&mut bus, op)?;
-        }
-        Ok(())
-    }
-}
-
-impl<'a, Device, E> eh1::spi::SpiDeviceWrite for &'a SpiDevice<Device>
-where
-    Device: MpsseCmdExecutor<Error = E>,
-    E: std::error::Error,
-    Error<E>: From<E>,
-{
-    fn write_transaction(&mut self, operations: &[&[u8]]) -> Result<(), Self::Error> {
-        // lock the bus
-        let lock: MutexGuard<FtInner<Device>> =
-            self.mtx.lock().expect("Failed to aquire FTDI mutex");
-        let mut bus: SpiDeviceBus<'a, Device> = SpiDeviceBus {
-            lock,
-            pol: self.pol,
-        };
-        for op in operations {
-            eh1::spi::SpiBusWrite::write(&mut bus, op)?;
-        }
-        Ok(())
-    }
-}
-
 impl<'a, Device, E> eh1::spi::SpiDevice for &'a SpiDevice<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
@@ -593,10 +509,10 @@ where
         for op in operations {
             match op {
                 eh1::spi::Operation::Read(buffer) => {
-                    eh1::spi::SpiBusRead::read(&mut bus, buffer)?;
+                    eh1::spi::SpiBus::read(&mut bus, buffer)?;
                 }
                 eh1::spi::Operation::Write(buffer) => {
-                    eh1::spi::SpiBusWrite::write(&mut bus, buffer)?;
+                    eh1::spi::SpiBus::write(&mut bus, buffer)?;
                 }
                 eh1::spi::Operation::Transfer(read, write) => {
                     eh1::spi::SpiBus::transfer(&mut bus, read, write)?;
@@ -604,12 +520,15 @@ where
                 eh1::spi::Operation::TransferInPlace(buffer) => {
                     eh1::spi::SpiBus::transfer_in_place(&mut bus, buffer)?;
                 }
+                eh1::spi::Operation::DelayUs(micros) => {
+                    std::thread::sleep(std::time::Duration::from_micros((*micros).into()));
+                }
             }
         }
 
         // flush the bus
         {
-            use eh1::spi::SpiBusFlush;
+            use eh1::spi::SpiBus;
             bus.flush()?;
         }
 
