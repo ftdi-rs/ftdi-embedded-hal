@@ -28,6 +28,20 @@ impl ErrorKind {
     }
 }
 
+impl<E: std::error::Error> eh1::i2c::Error for Error<E> {
+    fn kind(&self) -> eh1::i2c::ErrorKind {
+        match self {
+            Error::Hal(kind) => match kind {
+                ErrorKind::I2cNoAck => {
+                    eh1::i2c::ErrorKind::NoAcknowledge(eh1::i2c::NoAcknowledgeSource::Unknown)
+                }
+            },
+            Error::Io(_io_err) => eh1::i2c::ErrorKind::Other,
+            Error::Backend(_std_err) => eh1::i2c::ErrorKind::Other,
+        }
+    }
+}
+
 impl<E: std::error::Error> eh1::digital::Error for Error<E> {
     fn kind(&self) -> eh1::digital::ErrorKind {
         eh1::digital::ErrorKind::Other
