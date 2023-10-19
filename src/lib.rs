@@ -32,6 +32,13 @@
 //!
 //! ## SPI
 //!
+//! Pin setup:
+//!
+//! * D0 - SCK
+//! * D1 - SDO (MOSI)
+//! * D2 - SDI (MISO)
+//! * D3..D7 - Available for CS
+//!
 //! Communicate with SPI devices using [ftdi-rs] driver:
 //! ```no_run
 //! use ftdi_embedded_hal as hal;
