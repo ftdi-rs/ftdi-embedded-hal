@@ -44,7 +44,6 @@ fn main() {
         // bytes are still in the read buffer, which breaks tests afterwards.
         // Spi::flush(&mut spi) doesn't help either
 
-        /*
         // --- Asymmetric transfer (Read more than we write) ---
         print!("Starting asymetric transfer (read > write)...");
         let mut read: [u8; 4] = [0x00; 4];
@@ -55,7 +54,6 @@ fn main() {
         assert_eq!(read[2], 0x00u8);
         println!(" SUCCESS");
         sleep(delay);
-        */
 
         // --- Symmetric transfer with huge buffer ---
         // Only your RAM is the limit!
