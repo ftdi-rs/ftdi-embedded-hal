@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Added an I2C implementation for `embedded-hal` version 1.
+
+### Changed
+- Changed `ErrorKind::I2cNoAck` to have an inner type of `eh1::i2c::NoAcknowledgeSource`.
+
 ## [0.17.0] - 2023-08-15
 ### Changed
 - Updated the alpha release of `embedded-hal` from `1.0.0-alpha.11` to `1.0.0-rc.1`.
