@@ -1,5 +1,5 @@
-use std::fmt;
-use std::io;
+use eh1::i2c::NoAcknowledgeSource;
+use std::{fmt, io};
 
 /// Error type.
 #[derive(Debug)]
@@ -17,13 +17,19 @@ pub enum Error<E: std::error::Error> {
 #[non_exhaustive]
 pub enum ErrorKind {
     /// No ACK from the I2C slave
-    I2cNoAck,
+    I2cNoAck(NoAcknowledgeSource),
 }
 
 impl ErrorKind {
     fn as_str(&self) -> &str {
         match *self {
-            ErrorKind::I2cNoAck => "No ACK from slave",
+            ErrorKind::I2cNoAck(NoAcknowledgeSource::Address) => {
+                "No ACK from slave during addressing"
+            }
+            ErrorKind::I2cNoAck(NoAcknowledgeSource::Data) => {
+                "No ACK from slave during data transfer"
+            }
+            ErrorKind::I2cNoAck(NoAcknowledgeSource::Unknown) => "No ACK from slave",
         }
     }
 }
@@ -31,13 +37,8 @@ impl ErrorKind {
 impl<E: std::error::Error> eh1::i2c::Error for Error<E> {
     fn kind(&self) -> eh1::i2c::ErrorKind {
         match self {
-            Error::Hal(kind) => match kind {
-                ErrorKind::I2cNoAck => {
-                    eh1::i2c::ErrorKind::NoAcknowledge(eh1::i2c::NoAcknowledgeSource::Unknown)
-                }
-            },
-            Error::Io(_io_err) => eh1::i2c::ErrorKind::Other,
-            Error::Backend(_std_err) => eh1::i2c::ErrorKind::Other,
+            Self::Hal(ErrorKind::I2cNoAck(src)) => eh1::i2c::ErrorKind::NoAcknowledge(*src),
+            _ => eh1::i2c::ErrorKind::Other,
         }
     }
 }

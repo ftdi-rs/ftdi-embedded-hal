@@ -1,7 +1,7 @@
 use crate::error::Error;
 use crate::error::ErrorKind::I2cNoAck;
 use crate::{FtInner, PinUse};
-use eh1::i2c::{Operation, SevenBitAddress};
+use eh1::i2c::{NoAcknowledgeSource, Operation, SevenBitAddress};
 use ftdi_mpsse::{ClockBitsIn, ClockBitsOut, MpsseCmdBuilder, MpsseCmdExecutor};
 use std::sync::{Arc, Mutex};
 
@@ -97,13 +97,21 @@ where
 
     /// Enable faster I2C transactions by sending commands in a single write.
     ///
-    /// This is disabled by default.
+    /// This is disabled by default, and currently has no effect when using
+    /// version 1 of the `embedded-hal` traits.
     ///
     /// Normally the I2C methods will send commands with a delay after each
     /// slave ACK to read from the USB device.
     /// Enabling this will send I2C commands without a delay, but slave ACKs
     /// will only be checked at the end of each call to `read`, `write`, or
     /// `write_read`.
+    ///
+    /// Additionally this changes the type of errors that can occur:
+    ///
+    /// * enabled: NAK errors will be reported as
+    ///   `NoAcknowledgeSource::Unknown`.
+    /// * disabled: NAK errors will be reported as
+    ///   `NoAcknowledgeSource::Address` or `NoAcknowledgeSource::Data`.
     ///
     /// # Example
     ///
@@ -188,7 +196,7 @@ where
         lock.ft.recv(buffer)?;
 
         if (ack_buf[0] & 0b1) != 0x00 {
-            return Err(Error::Hal(I2cNoAck));
+            return Err(Error::Hal(I2cNoAck(NoAcknowledgeSource::Unknown)));
         }
 
         Ok(())
@@ -221,7 +229,7 @@ where
         let mut ack_buf: [u8; 1] = [0; 1];
         lock.ft.recv(&mut ack_buf)?;
         if (ack_buf[0] & 0b1) != 0x00 {
-            return Err(Error::Hal(I2cNoAck));
+            return Err(Error::Hal(I2cNoAck(NoAcknowledgeSource::Address)));
         }
 
         let mut mpsse_cmd: MpsseCmdBuilder = MpsseCmdBuilder::new();
@@ -318,7 +326,7 @@ where
         let mut ack_buf: Vec<u8> = vec![0; 1 + bytes.len()];
         lock.ft.recv(ack_buf.as_mut_slice())?;
         if ack_buf.iter().any(|&ack| (ack & 0b1) != 0x00) {
-            Err(Error::Hal(I2cNoAck))
+            Err(Error::Hal(I2cNoAck(NoAcknowledgeSource::Unknown)))
         } else {
             Ok(())
         }
@@ -351,7 +359,7 @@ where
         let mut ack_buf: [u8; 1] = [0; 1];
         lock.ft.recv(&mut ack_buf)?;
         if (ack_buf[0] & 0b1) != 0x00 {
-            return Err(Error::Hal(I2cNoAck));
+            return Err(Error::Hal(I2cNoAck(NoAcknowledgeSource::Address)));
         }
 
         for (idx, byte) in bytes.iter().enumerate() {
@@ -388,7 +396,7 @@ where
             let mut ack_buf: [u8; 1] = [0; 1];
             lock.ft.recv(&mut ack_buf)?;
             if (ack_buf[0] & 0b1) != 0x00 {
-                return Err(Error::Hal(I2cNoAck));
+                return Err(Error::Hal(I2cNoAck(NoAcknowledgeSource::Data)));
             }
         }
 
@@ -493,7 +501,7 @@ where
         lock.ft.recv(buffer)?;
 
         if ack_buf.iter().any(|&ack| (ack & 0b1) != 0x00) {
-            Err(Error::Hal(I2cNoAck))
+            Err(Error::Hal(I2cNoAck(NoAcknowledgeSource::Unknown)))
         } else {
             Ok(())
         }
@@ -534,7 +542,7 @@ where
         let mut ack_buf: [u8; 1] = [0; 1];
         lock.ft.recv(&mut ack_buf)?;
         if (ack_buf[0] & 0b1) != 0x00 {
-            return Err(Error::Hal(I2cNoAck));
+            return Err(Error::Hal(I2cNoAck(NoAcknowledgeSource::Address)));
         }
 
         for byte in bytes {
@@ -551,7 +559,7 @@ where
             let mut ack_buf: [u8; 1] = [0; 1];
             lock.ft.recv(&mut ack_buf)?;
             if (ack_buf[0] & 0b1) != 0x00 {
-                return Err(Error::Hal(I2cNoAck));
+                return Err(Error::Hal(I2cNoAck(NoAcknowledgeSource::Data)));
             }
         }
 
@@ -579,7 +587,7 @@ where
         let mut ack_buf: [u8; 1] = [0; 1];
         lock.ft.recv(&mut ack_buf)?;
         if (ack_buf[0] & 0b1) != 0x00 {
-            return Err(Error::Hal(I2cNoAck));
+            return Err(Error::Hal(I2cNoAck(NoAcknowledgeSource::Data)));
         }
 
         let mut mpsse_cmd: MpsseCmdBuilder = MpsseCmdBuilder::new();
@@ -622,7 +630,7 @@ where
         Ok(())
     }
 
-    fn transaction_slow(
+    fn transaction(
         &mut self,
         address: u8,
         operations: &mut [Operation<'_>],
@@ -641,13 +649,13 @@ where
         }
         lock.ft.send(mpsse_cmd.as_slice())?;
 
-        let mut last_op_was_a_read = false;
+        let mut prev_op_was_a_read: bool = false;
         for (idx, operation) in operations.iter_mut().enumerate() {
             match operation {
                 Operation::Read(buffer) => {
                     assert!(!buffer.is_empty(), "buffer must be a non-empty slice");
 
-                    if idx == 0 || !last_op_was_a_read {
+                    if idx == 0 || !prev_op_was_a_read {
                         let mut mpsse_cmd: MpsseCmdBuilder = MpsseCmdBuilder::new();
                         if idx != 0 {
                             // SR
@@ -680,7 +688,7 @@ where
                         let mut ack_buf: [u8; 1] = [0; 1];
                         lock.ft.recv(&mut ack_buf)?;
                         if (ack_buf[0] & 0b1) != 0x00 {
-                            return Err(Error::Hal(I2cNoAck));
+                            return Err(Error::Hal(I2cNoAck(NoAcknowledgeSource::Address)));
                         }
                     }
 
@@ -704,12 +712,12 @@ where
                     lock.ft.send(mpsse_cmd.as_slice())?;
                     lock.ft.recv(buffer)?;
 
-                    last_op_was_a_read = true;
+                    prev_op_was_a_read = true;
                 }
                 Operation::Write(bytes) => {
                     assert!(!bytes.is_empty(), "bytes must be a non-empty slice");
 
-                    if idx == 0 || last_op_was_a_read {
+                    if idx == 0 || prev_op_was_a_read {
                         let mut mpsse_cmd: MpsseCmdBuilder = MpsseCmdBuilder::new();
                         if idx != 0 {
                             // SR
@@ -742,7 +750,7 @@ where
                         let mut ack_buf: [u8; 1] = [0; 1];
                         lock.ft.recv(&mut ack_buf)?;
                         if (ack_buf[0] & 0b1) != 0x00 {
-                            return Err(Error::Hal(I2cNoAck));
+                            return Err(Error::Hal(I2cNoAck(NoAcknowledgeSource::Address)));
                         }
                     }
 
@@ -761,11 +769,11 @@ where
                         let mut ack_buf: [u8; 1] = [0; 1];
                         lock.ft.recv(&mut ack_buf)?;
                         if (ack_buf[0] & 0b1) != 0x00 {
-                            return Err(Error::Hal(I2cNoAck));
+                            return Err(Error::Hal(I2cNoAck(NoAcknowledgeSource::Data)));
                         }
                     }
 
-                    last_op_was_a_read = false;
+                    prev_op_was_a_read = false;
                 }
             }
         }
@@ -789,14 +797,6 @@ where
         lock.ft.send(mpsse_cmd.as_slice())?;
 
         Ok(())
-    }
-
-    fn transaction_fast(
-        &mut self,
-        _address: u8,
-        _operations: &mut [Operation<'_>],
-    ) -> Result<(), Error<E>> {
-        unimplemented!()
     }
 }
 
@@ -871,10 +871,6 @@ where
         address: SevenBitAddress,
         operations: &mut [Operation<'_>],
     ) -> Result<(), Self::Error> {
-        if self.fast {
-            self.transaction_fast(address, operations)
-        } else {
-            self.transaction_slow(address, operations)
-        }
+        self.transaction(address, operations)
     }
 }
