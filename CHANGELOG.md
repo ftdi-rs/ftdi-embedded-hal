@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Changed `ErrorKind::I2cNoAck` to have an inner type of `eh1::i2c::NoAcknowledgeSource`.
 
+### Fixed
+- Fixed asymmetric SPI transfers (read size > write size) with `eh1`.
+
 ## [0.17.0] - 2023-08-15
 ### Changed
 - Updated the alpha release of `embedded-hal` from `1.0.0-alpha.11` to `1.0.0-rc.1`.

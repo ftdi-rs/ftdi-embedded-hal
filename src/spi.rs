@@ -279,6 +279,12 @@ where
         lock.ft.send(cmd.as_slice())?;
         lock.ft.recv(read)?;
 
+        let remain: usize = write.len().saturating_sub(read.len());
+        if remain != 0 {
+            let mut remain_buf: Vec<u8> = vec![0; remain];
+            lock.ft.recv(&mut remain_buf)?;
+        }
+
         Ok(())
     }
 }
