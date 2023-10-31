@@ -40,10 +40,6 @@ fn main() {
         assert_eq!(write, read);
         println!(" SUCCESS");
 
-        // XXX: After we do an asymmetric transfer, we still have two leftover
-        // bytes are still in the read buffer, which breaks tests afterwards.
-        // Spi::flush(&mut spi) doesn't help either
-
         // --- Asymmetric transfer (Read more than we write) ---
         print!("Starting asymetric transfer (read > write)...");
         let mut read: [u8; 4] = [0x00; 4];
