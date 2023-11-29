@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.0] - 2023-11-29
+### Changed
+- Updated the v1 release of `embedded-hal` from `1.0.0-rc.1` to `1.0.0-rc.2`.
+- Updated the v1 release of `embedded-hal-nb` from `1.0.0-rc.1` to `1.0.0-rc.2`.
+
 ## [0.18.0] - 2023-10-30
 ### Added
 - Added an I2C implementation for `embedded-hal` version 1.
@@ -158,7 +163,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2020-09-12
 - Initial release
 
-[Unreleased]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.19.0...HEAD
+[0.19.0]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.15.1...v0.16.0

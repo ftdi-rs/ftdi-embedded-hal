@@ -526,8 +526,8 @@ where
                 eh1::spi::Operation::TransferInPlace(buffer) => {
                     eh1::spi::SpiBus::transfer_in_place(&mut bus, buffer)?;
                 }
-                eh1::spi::Operation::DelayUs(micros) => {
-                    std::thread::sleep(std::time::Duration::from_micros((*micros).into()));
+                eh1::spi::Operation::DelayNs(micros) => {
+                    std::thread::sleep(std::time::Duration::from_nanos((*micros).into()));
                 }
             }
         }

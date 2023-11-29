@@ -32,7 +32,11 @@ impl Default for Delay {
     }
 }
 
-impl eh1::delay::DelayUs for Delay {
+impl eh1::delay::DelayNs for Delay {
+    fn delay_ns(&mut self, ns: u32) {
+        std::thread::sleep(std::time::Duration::from_nanos(ns.into()))
+    }
+
     fn delay_us(&mut self, us: u32) {
         std::thread::sleep(std::time::Duration::from_micros(us.into()))
     }
