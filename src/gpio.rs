@@ -177,11 +177,11 @@ where
     E: std::error::Error,
     Error<E>: From<E>,
 {
-    fn is_high(&self) -> Result<bool, Self::Error> {
+    fn is_high(&mut self) -> Result<bool, Self::Error> {
         self.get()
     }
 
-    fn is_low(&self) -> Result<bool, Self::Error> {
+    fn is_low(&mut self) -> Result<bool, Self::Error> {
         self.get().map(|res| !res)
     }
 }
