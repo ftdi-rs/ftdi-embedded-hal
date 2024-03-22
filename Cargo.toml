@@ -13,6 +13,8 @@ readme = "README.md"
 
 [features]
 libftd2xx-static = ["libftd2xx/static"]
+ftdi-vendored = ["ftdi/vendored"]
+ftdi-libusb1-sys = ["ftdi/libusb1-sys"]
 default = []
 
 [dependencies]
