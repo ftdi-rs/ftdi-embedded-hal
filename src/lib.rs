@@ -196,10 +196,8 @@ impl std::fmt::Display for PinUse {
     }
 }
 
-#[derive(Debug)]
-struct FtInner<Device: MpsseCmdExecutor> {
-    /// FTDI device.
-    ft: Device,
+#[derive(Debug, Default)]
+struct GpioByte {
     /// GPIO direction.
     direction: u8,
     /// GPIO value.
@@ -208,17 +206,58 @@ struct FtInner<Device: MpsseCmdExecutor> {
     pins: [Option<PinUse>; 8],
 }
 
+#[derive(Debug)]
+struct FtInner<Device: MpsseCmdExecutor> {
+    /// FTDI device.
+    ft: Device,
+    lower: GpioByte,
+    upper: GpioByte,
+}
+
+// FtInner deref's into .lower because SPI and I2C code were not adjusted yet to handle the split;
+// once those are updated, the Deref implementation can go away again
+
+impl<Device: MpsseCmdExecutor> core::ops::Deref for FtInner<Device> {
+    type Target = GpioByte;
+    fn deref(&self) -> &GpioByte {
+        &self.lower
+    }
+}
+
+impl<Device: MpsseCmdExecutor> core::ops::DerefMut for FtInner<Device> {
+    fn deref_mut(&mut self) -> &mut GpioByte {
+        &mut self.lower
+    }
+}
+
 impl<Device: MpsseCmdExecutor> FtInner<Device> {
-    /// Allocate a pin for a specific use.
+    /// Allocate a pin in the lower byte for a specific use.
     pub fn allocate_pin(&mut self, idx: u8, purpose: PinUse) {
         assert!(idx < 8, "Pin index {idx} is out of range 0 - 7");
 
-        if let Some(current) = self.pins[usize::from(idx)] {
+        if let Some(current) = self.lower.pins[usize::from(idx)] {
             panic!(
-                "Unable to allocate pin {idx} for {purpose}, pin is already allocated for {current}"
+            "Unable to allocate pin {idx} for {purpose}, pin is already allocated for {current}"
             );
         } else {
-            self.pins[usize::from(idx)] = Some(purpose)
+            self.lower.pins[usize::from(idx)] = Some(purpose)
+        }
+    }
+
+    /// Allocate a pin for a specific use.
+    pub fn allocate_pin_any(&mut self, pin: Pin, purpose: PinUse) {
+        let (byte, idx) = match pin {
+            Pin::Lower(idx) => (&mut self.lower, idx),
+            Pin::Upper(idx) => (&mut self.upper, idx),
+        };
+        assert!(idx < 8, "Pin index {idx} is out of range 0 - 7");
+
+        if let Some(current) = byte.pins[usize::from(idx)] {
+            panic!(
+            "Unable to allocate pin {idx} for {purpose}, pin is already allocated for {current}"
+            );
+        } else {
+            byte.pins[usize::from(idx)] = Some(purpose)
         }
     }
 }
@@ -227,9 +266,8 @@ impl<Device: MpsseCmdExecutor> From<Device> for FtInner<Device> {
     fn from(ft: Device) -> Self {
         FtInner {
             ft,
-            direction: 0x00,
-            value: 0x00,
-            pins: [None; 8],
+            lower: Default::default(),
+            upper: Default::default(),
         }
     }
 }
@@ -584,5 +622,149 @@ where
     /// Panics if the pin is already in-use.
     pub fn adi7(&self) -> Result<InputPin<Device>, Error<E>> {
         InputPin::new(self.mtx.clone(), Pin::Lower(7))
+    }
+
+    /// Aquire the digital output upper pin 0 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn c0(&self) -> Result<OutputPin<Device>, Error<E>> {
+        OutputPin::new(self.mtx.clone(), Pin::Upper(0))
+    }
+
+    /// Aquire the digital input upper pin 0 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn ci0(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(self.mtx.clone(), Pin::Upper(0))
+    }
+
+    /// Aquire the digital output upper pin 1 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn c1(&self) -> Result<OutputPin<Device>, Error<E>> {
+        OutputPin::new(self.mtx.clone(), Pin::Upper(1))
+    }
+
+    /// Aquire the digital input upper pin 1 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn ci1(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(self.mtx.clone(), Pin::Upper(1))
+    }
+
+    /// Aquire the digital output upper pin 2 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn c2(&self) -> Result<OutputPin<Device>, Error<E>> {
+        OutputPin::new(self.mtx.clone(), Pin::Upper(2))
+    }
+
+    /// Aquire the digital input upper pin 2 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn ci2(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(self.mtx.clone(), Pin::Upper(2))
+    }
+
+    /// Aquire the digital output upper pin 3 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn c3(&self) -> Result<OutputPin<Device>, Error<E>> {
+        OutputPin::new(self.mtx.clone(), Pin::Upper(3))
+    }
+
+    /// Aquire the digital input upper pin 3 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn ci3(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(self.mtx.clone(), Pin::Upper(3))
+    }
+
+    /// Aquire the digital output upper pin 4 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn c4(&self) -> Result<OutputPin<Device>, Error<E>> {
+        OutputPin::new(self.mtx.clone(), Pin::Upper(4))
+    }
+
+    /// Aquire the digital input upper pin 4 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn ci4(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(self.mtx.clone(), Pin::Upper(4))
+    }
+
+    /// Aquire the digital output upper pin 5 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn c5(&self) -> Result<OutputPin<Device>, Error<E>> {
+        OutputPin::new(self.mtx.clone(), Pin::Upper(5))
+    }
+
+    /// Aquire the digital input upper pin 5 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn ci5(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(self.mtx.clone(), Pin::Upper(5))
+    }
+
+    /// Aquire the digital output upper pin 6 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn c6(&self) -> Result<OutputPin<Device>, Error<E>> {
+        OutputPin::new(self.mtx.clone(), Pin::Upper(6))
+    }
+
+    /// Aquire the digital input upper pin 6 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn ci6(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(self.mtx.clone(), Pin::Upper(6))
+    }
+
+    /// Aquire the digital output upper pin 7 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn c7(&self) -> Result<OutputPin<Device>, Error<E>> {
+        OutputPin::new(self.mtx.clone(), Pin::Upper(7))
+    }
+
+    /// Aquire the digital input upper pin 7 for the FT232H.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pin is already in-use.
+    pub fn ci7(&self) -> Result<InputPin<Device>, Error<E>> {
+        InputPin::new(self.mtx.clone(), Pin::Upper(7))
     }
 }
