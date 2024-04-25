@@ -3,6 +3,12 @@ use crate::{FtInner, PinUse};
 use ftdi_mpsse::{MpsseCmdBuilder, MpsseCmdExecutor};
 use std::sync::{Arc, Mutex};
 
+/// Pin number
+#[derive(Debug, Copy, Clone)]
+pub(crate) enum Pin {
+    Lower(u8),
+}
+
 /// FTDI output pin.
 ///
 /// This is created by calling [`FtHal::ad0`] - [`FtHal::ad7`].
@@ -14,7 +20,7 @@ pub struct OutputPin<Device: MpsseCmdExecutor> {
     /// Parent FTDI device.
     mtx: Arc<Mutex<FtInner<Device>>>,
     /// GPIO pin index.  0-7 for the FT232H.
-    idx: u8,
+    pin: Pin,
 }
 
 impl<Device, E> OutputPin<Device>
@@ -25,10 +31,12 @@ where
 {
     pub(crate) fn new(
         mtx: Arc<Mutex<FtInner<Device>>>,
-        idx: u8,
+        pin: Pin,
     ) -> Result<OutputPin<Device>, Error<E>> {
         {
             let mut lock = mtx.lock().expect("Failed to aquire FTDI mutex");
+
+            let Pin::Lower(idx) = pin;
 
             lock.direction |= 1 << idx;
             lock.allocate_pin(idx, PinUse::Output);
@@ -37,7 +45,7 @@ where
                 .send_immediate();
             lock.ft.send(cmd.as_slice())?;
         }
-        Ok(OutputPin { mtx, idx })
+        Ok(OutputPin { mtx, pin })
     }
 
     pub(crate) fn set(&self, state: bool) -> Result<(), Error<E>> {
@@ -61,7 +69,8 @@ where
 impl<Device: MpsseCmdExecutor> OutputPin<Device> {
     /// Convert the GPIO pin index to a pin mask
     pub(crate) fn mask(&self) -> u8 {
-        1 << self.idx
+        let Pin::Lower(idx) = self.pin;
+        1 << idx
     }
 }
 
@@ -117,7 +126,7 @@ pub struct InputPin<Device: MpsseCmdExecutor> {
     /// Parent FTDI device.
     mtx: Arc<Mutex<FtInner<Device>>>,
     /// GPIO pin index.  0-7 for the FT232H.
-    idx: u8,
+    pin: Pin,
 }
 
 impl<Device, E> InputPin<Device>
@@ -128,10 +137,12 @@ where
 {
     pub(crate) fn new(
         mtx: Arc<Mutex<FtInner<Device>>>,
-        idx: u8,
+        pin: Pin,
     ) -> Result<InputPin<Device>, Error<E>> {
         {
             let mut lock = mtx.lock().expect("Failed to aquire FTDI mutex");
+
+            let Pin::Lower(idx) = pin;
 
             lock.direction &= !(1 << idx);
             lock.allocate_pin(idx, PinUse::Input);
@@ -140,7 +151,7 @@ where
                 .send_immediate();
             lock.ft.send(cmd.as_slice())?;
         }
-        Ok(InputPin { mtx, idx })
+        Ok(InputPin { mtx, pin })
     }
 
     pub(crate) fn get(&self) -> Result<bool, Error<E>> {
@@ -158,7 +169,8 @@ where
 impl<Device: MpsseCmdExecutor> InputPin<Device> {
     /// Convert the GPIO pin index to a pin mask
     pub(crate) fn mask(&self) -> u8 {
-        1 << self.idx
+        let Pin::Lower(idx) = self.pin;
+        1 << idx
     }
 }
 
