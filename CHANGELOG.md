@@ -4,11 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.21.1] - 2023-03-26
+## [0.22.0] - 2024-05-06
+### Added
+- Added support for the upper pins (C0-C7 on the FT232H).
+
+## [0.21.1] - 2024-03-26
 ### Added
 - Added `ftdi-vendored` and `ftdi-libusb1-sys` passthrough features for linking with the `libftdi` backend.
 
-## [0.21.0] - 2023-01-09
+## [0.21.0] - 2024-01-09
 ### Changed
 - updated the v1 release of `embedded-hal` from `1.0.0-rc.3` to `1`.
 - updated the v1 release of `embedded-hal-nb` from `1.0.0-rc.3` to `1`.
@@ -177,7 +181,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2020-09-12
 - Initial release
 
-[Unreleased]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.21.1...HEAD
+[Unreleased]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.22.0...HEAD
+[0.22.0]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.21.1...v0.22.0
 [0.21.1]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.21.0...v0.21.1
 [0.21.0]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.19.0...v0.20.0
