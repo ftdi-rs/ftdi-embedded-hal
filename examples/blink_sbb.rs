@@ -22,15 +22,19 @@ fn main() {
             let hal = hal::FtHalSbb::init(epe_if_d, hal_cfg).unwrap();
 
             // Assign the GPIO pins.
-            let gpio_ado0 = hal.ad0().unwrap();
-            let gpio_adi1 = hal.adi1().unwrap();
+            let mut gpio_ado0 = hal.ad0().unwrap();
+            let mut gpio_adi1 = hal.adi1().unwrap();
 
             println!("Starting blinky using synchronous bit-bang gpio example");
             for n in 0..NUM_BLINK {
-                let state = gpio_adi1.get().expect("failed to get GPIO AD1");
+                let state = gpio_adi1.is_high().expect("failed to get GPIO AD1 state");
                 println!("Read State: {}", state);
 
-                gpio_ado0.set(!state).expect("failed to set GPIO AD0");
+                if state {
+                    gpio_ado0.set_low().expect("failed to set GPIO AD0 low");
+                } else {
+                    gpio_ado0.set_high().expect("failed to set GPIO AD0 high");
+                }
 
                 sleep(SLEEP_DURATION);
 
