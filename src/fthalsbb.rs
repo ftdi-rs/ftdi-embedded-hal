@@ -17,11 +17,11 @@ use ftdi;
 /// * 100kHz clock frequency.
 #[derive(Debug)]
 pub struct FtHalSbbSettings {
-    reset: bool,
-    read_chunksize: u32,
-    write_chunksize: u32,
-    latency_timer_ms: u8,
-    clock_frequency: u32,
+    pub reset: bool,
+    pub read_chunksize: u32,
+    pub write_chunksize: u32,
+    pub latency_timer_ms: u8,
+    pub clock_frequency: u32,
 }
 
 impl Default for FtHalSbbSettings {
