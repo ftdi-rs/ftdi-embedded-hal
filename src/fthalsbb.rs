@@ -17,10 +17,15 @@ use ftdi;
 /// * 100kHz clock frequency.
 #[derive(Debug)]
 pub struct FtHalSbbSettings {
+    /// Reset the gpio state at device initialization (when true).
     pub reset: bool,
+    /// Read chunk size, in bytes.
     pub read_chunksize: u32,
+    /// Write chunk size, in bytes.
     pub write_chunksize: u32,
+    /// USB latency timer, in ms.
     pub latency_timer_ms: u8,
+    /// GPIO clock frequency, in Hz.
     pub clock_frequency: u32,
 }
 
