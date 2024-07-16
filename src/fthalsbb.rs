@@ -38,7 +38,7 @@ impl Default for FtHalSbbSettings {
 
 // Internal struct to hold in the mutex.
 // Need the FTDI device, but also the pin directions and types.
-struct FtInnerSbb {
+pub(crate) struct FtInnerSbb {
     ft: ftdi::Device,
     lower: GpioByte,
     upper: GpioByte,
