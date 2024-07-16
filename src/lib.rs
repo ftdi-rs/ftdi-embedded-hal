@@ -173,11 +173,21 @@ mod gpio;
 mod i2c;
 mod spi;
 
+#[cfg(feature = "ftdi")]
+mod fthalsbb;
+#[cfg(feature = "ftdi")]
+mod gpiosbb;
+
 pub use crate::error::{Error, ErrorKind};
 pub use delay::Delay;
 pub use gpio::{InputPin, OutputPin};
 pub use i2c::I2c;
 pub use spi::{Spi, SpiDevice};
+
+#[cfg(feature = "ftdi")]
+pub use fthalsbb::{FtHalSbb, FtHalSbbSettings};
+#[cfg(feature = "ftdi")]
+pub use gpiosbb::{InputPinSbb, OutputPinSbb};
 
 use gpio::Pin;
 
