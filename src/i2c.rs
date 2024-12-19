@@ -653,8 +653,6 @@ where
         for (idx, operation) in operations.iter_mut().enumerate() {
             match operation {
                 Operation::Read(buffer) => {
-                    assert!(!buffer.is_empty(), "buffer must be a non-empty slice");
-
                     if idx == 0 || !prev_op_was_a_read {
                         let mut mpsse_cmd: MpsseCmdBuilder = MpsseCmdBuilder::new();
                         if idx != 0 {
@@ -715,8 +713,6 @@ where
                     prev_op_was_a_read = true;
                 }
                 Operation::Write(bytes) => {
-                    assert!(!bytes.is_empty(), "bytes must be a non-empty slice");
-
                     if idx == 0 || prev_op_was_a_read {
                         let mut mpsse_cmd: MpsseCmdBuilder = MpsseCmdBuilder::new();
                         if idx != 0 {
