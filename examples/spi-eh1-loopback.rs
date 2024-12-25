@@ -1,8 +1,10 @@
 //! This is a loopback example for embedded-hal-1 traits:
 //! * SpiBus
 //! * SpiDevice (TODO)
+//!
 //! Pin setup:
 //! * D1 <-> D2 (connect SDO with SDI)
+//!
 //! Leave other pins unconnected.
 use ftdi_embedded_hal as hal;
 use std::thread::sleep;
@@ -55,8 +57,8 @@ fn main() {
         // Only your RAM is the limit!
         print!("Starting huge transfer...");
         let mut write = [0x55u8; 4096];
-        for byte in 0..write.len() {
-            write[byte] = byte as u8;
+        for (idx, byte) in write.iter_mut().enumerate() {
+            *byte = idx as u8;
         }
         let mut read = [0x00u8; 4096];
         sleep(delay);
@@ -70,13 +72,13 @@ fn main() {
         // needed) ---
         print!("Starting huge transfer (in-place)...");
         let mut write = [0x55u8; 4096];
-        for byte in 0..write.len() {
-            write[byte] = byte as u8;
+        for (idx, byte) in write.iter_mut().enumerate() {
+            *byte = idx as u8;
         }
 
         SpiBus::transfer_in_place(&mut spi, &mut write[..]).expect("Huge transfer failed");
-        for byte in 0..write.len() {
-            assert_eq!(write[byte], byte as u8);
+        for (idx, byte) in write.iter().enumerate() {
+            assert_eq!(*byte, idx as u8);
         }
         println!(" SUCCESS");
         sleep(delay);
