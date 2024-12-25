@@ -326,7 +326,7 @@ pub struct SpiDeviceBus<'a, Device: MpsseCmdExecutor> {
     pol: Polarity,
 }
 
-impl<'a, Device, E> eh1::spi::ErrorType for SpiDeviceBus<'a, Device>
+impl<Device, E> eh1::spi::ErrorType for SpiDeviceBus<'_, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -335,7 +335,7 @@ where
     type Error = Error<E>;
 }
 
-impl<'a, Device, E> eh1::spi::SpiBus<u8> for SpiDeviceBus<'a, Device>
+impl<Device, E> eh1::spi::SpiBus<u8> for SpiDeviceBus<'_, Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -474,7 +474,7 @@ where
     }
 }
 
-impl<'a, Device, E> eh1::spi::ErrorType for &'a SpiDevice<Device>
+impl<Device, E> eh1::spi::ErrorType for &SpiDevice<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,

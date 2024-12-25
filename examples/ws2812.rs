@@ -43,7 +43,6 @@ fn main() {
             .clone()
             .into_iter()
             .flatten()
-            .into_iter()
             .flatten()
             .collect::<Vec<u8>>();
 
