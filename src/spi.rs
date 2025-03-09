@@ -474,7 +474,7 @@ where
     }
 }
 
-impl<Device, E> eh1::spi::ErrorType for &SpiDevice<Device>
+impl<Device, E> eh1::spi::ErrorType for SpiDevice<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -483,7 +483,7 @@ where
     type Error = Error<E>;
 }
 
-impl<'a, Device, E> eh1::spi::SpiDevice for &'a SpiDevice<Device>
+impl<Device, E> eh1::spi::SpiDevice for SpiDevice<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
     E: std::error::Error,
@@ -507,7 +507,7 @@ where
                 .as_slice(),
         )?;
 
-        let mut bus: SpiDeviceBus<'a, Device> = SpiDeviceBus {
+        let mut bus: SpiDeviceBus<Device> = SpiDeviceBus {
             lock,
             pol: self.pol,
         };
