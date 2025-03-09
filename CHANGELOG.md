@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- Changed the SPI traits to be implemented on the `SpiDevice` struct, instead of a reference to the struct
+- Changed the SPI traits to be implemented on the `SpiDevice` struct, instead of a reference to the struct.
+- Changed the edition from 2021 to 2024.
 
 ## [0.22.1] - 2024-12-24
 ### Fixed

@@ -237,7 +237,7 @@ impl<Device: MpsseCmdExecutor> FtInner<Device> {
 
         if let Some(current) = self.lower.pins[usize::from(idx)] {
             panic!(
-            "Unable to allocate pin {idx} for {purpose}, pin is already allocated for {current}"
+                "Unable to allocate pin {idx} for {purpose}, pin is already allocated for {current}"
             );
         } else {
             self.lower.pins[usize::from(idx)] = Some(purpose)
@@ -254,7 +254,7 @@ impl<Device: MpsseCmdExecutor> FtInner<Device> {
 
         if let Some(current) = byte.pins[usize::from(idx)] {
             panic!(
-            "Unable to allocate pin {idx} for {purpose}, pin is already allocated for {current}"
+                "Unable to allocate pin {idx} for {purpose}, pin is already allocated for {current}"
             );
         } else {
             byte.pins[usize::from(idx)] = Some(purpose)
