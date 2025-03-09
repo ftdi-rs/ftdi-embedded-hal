@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.23.0] - 2025-03-09
 ### Changed
 - Changed the SPI traits to be implemented on the `SpiDevice` struct, instead of a reference to the struct.
 - Changed the edition from 2021 to 2024.
@@ -190,7 +190,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2020-09-12
 - Initial release
 
-[Unreleased]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.22.1...HEAD
+[Unreleased]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.23.0...HEAD
+[0.23.0]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.22.1...v0.23.0
 [0.22.1]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.22.0...v0.22.1
 [0.22.0]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.21.1...v0.22.0
 [0.21.1]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.21.0...v0.21.1
