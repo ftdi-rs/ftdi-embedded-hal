@@ -391,6 +391,35 @@ where
     E: std::error::Error,
     Error<E>: From<E>,
 {
+    /// Executes the closure with the device.
+    ///
+    /// Useful for accessing EEPROM, or other device-specific functionality.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use ftdi_embedded_hal as hal;
+    /// # #[cfg(feature = "libftd2xx")]
+    /// use hal::libftd2xx::FtdiEeprom;
+    ///
+    /// # #[cfg(feature = "libftd2xx")]
+    /// # {
+    /// let device = libftd2xx::Ft2232h::with_description("Dual RS232-HS A")?;
+    /// let mut hal = hal::FtHal::init_default(device)?;
+    /// let serial_number: String =
+    ///     hal.with_device(|d| d.eeprom_read().map(|(_, strings)| strings.serial_number()))?;
+    /// # }
+    /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn with_device<T, F>(&mut self, mut f: F) -> T
+    where
+        F: FnMut(&mut Device) -> T,
+    {
+        let mut inner = self.mtx.lock().expect("Failed to aquire FTDI mutex");
+        let result: T = f(&mut inner.ft);
+        result
+    }
+
     /// Aquire the SPI peripheral for the FT232H.
     ///
     /// Pin assignments:
