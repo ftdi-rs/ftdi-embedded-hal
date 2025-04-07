@@ -1,14 +1,13 @@
 [package]
 name = "ftdi-embedded-hal"
-version = "0.22.1"
+version = "0.23.1"
 authors = ["Alex Martens <alex@thinglab.org>"]
 description = "embedded-hal implementation for FTDI USB devices."
 keywords = ["ftdi", "usb", "io", "hal"]
 categories = ["embedded"]
-edition = "2021"
+edition = "2024"
 license = "MIT"
 repository = "https://github.com/ftdi-rs/ftdi-embedded-hal/"
-documentation = "https://docs.rs/ftdi-embedded-hal"
 readme = "README.md"
 
 [features]
@@ -32,6 +31,3 @@ eeprom24x = "0.7.0"
 lm75 = "1.0.0"
 spi-memory = "0.2.0"
 version-sync = "0.9.2"
-
-[badges]
-maintenance = { status = "experimental" }
