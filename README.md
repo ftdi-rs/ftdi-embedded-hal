@@ -5,12 +5,12 @@
 # ftdi-embedded-hal
 
 This is an [embedded-hal] implementation for the FTDI chips
-that can use various drivers including [libftd2xx] and [ftdi-rs].
+that use the [libftd2xx] or [ftdi-rs] drivers.
 
 This enables development of embedded device drivers without the use of
-a microcontroller. The FTDI devices interface with PC via USB, and
+a microcontroller. The FTDI devices interface with a PC via USB, and
 provide a multi-protocol synchronous serial engine to interface
-with most GPIO, SPI, I2C embedded devices.
+with most GPIO, SPI, and I2C embedded devices.
 
 **Note:**
 This is strictly a development tool.
