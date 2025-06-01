@@ -503,11 +503,9 @@ where
 
         match self.pol.clk {
             ClockData::MsbNegIn => {
-                // clock
                 value_cs_asserted |= 1;
             }
             ClockData::MsbPosIn => {
-                // clock
                 value_cs_asserted &= !(1);
             }
             _ => {
@@ -559,11 +557,9 @@ where
         let mut value_cs_deasserted: u8 = lock.value | self.cs_mask();
         match self.pol.clk {
             ClockData::MsbNegIn => {
-                // clock
                 value_cs_deasserted |= 1;
             }
             ClockData::MsbPosIn => {
-                // clock
                 value_cs_deasserted &= !(1);
             }
             _ => {
