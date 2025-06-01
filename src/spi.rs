@@ -499,7 +499,22 @@ where
         let direction: u8 = lock.direction;
 
         // assert the chip select pin
-        let value_cs_asserted: u8 = lock.value & !self.cs_mask();
+        let mut value_cs_asserted: u8 = lock.value & !self.cs_mask();
+
+        match self.pol.clk {
+            ClockData::MsbNegIn => {
+                // clock
+                value_cs_asserted |= 1;
+            }
+            ClockData::MsbPosIn => {
+                // clock
+                value_cs_asserted &= !(1);
+            }
+            _ => {
+                unimplemented!()
+            }
+        }
+
         lock.ft.send(
             MpsseCmdBuilder::new()
                 .set_gpio_lower(value_cs_asserted, direction)
@@ -541,7 +556,20 @@ where
         let mut lock: MutexGuard<FtInner<Device>> = bus.lock;
 
         // deassert the chip select pin
-        let value_cs_deasserted: u8 = lock.value | self.cs_mask();
+        let mut value_cs_deasserted: u8 = lock.value | self.cs_mask();
+        match self.pol.clk {
+            ClockData::MsbNegIn => {
+                // clock
+                value_cs_deasserted |= 1;
+            }
+            ClockData::MsbPosIn => {
+                // clock
+                value_cs_deasserted &= !(1);
+            }
+            _ => {
+                unimplemented!()
+            }
+        }
         lock.ft.send(
             MpsseCmdBuilder::new()
                 .set_gpio_lower(value_cs_deasserted, direction)
