@@ -501,15 +501,14 @@ where
         // assert the chip select pin
         let mut value_cs_asserted: u8 = lock.value & !self.cs_mask();
 
+        // drive pin 0, the clock pin according to the CPOL setting
+        // Reference: https://github.com/ftdi-rs/ftdi-embedded-hal/pull/69
         match self.pol.clk {
-            ClockData::MsbNegIn => {
+            ClockData::MsbNegIn | ClockData::LsbNegIn => {
                 value_cs_asserted |= 1;
             }
-            ClockData::MsbPosIn => {
-                value_cs_asserted &= !(1);
-            }
-            _ => {
-                unimplemented!()
+            ClockData::MsbPosIn | ClockData::LsbPosIn => {
+                value_cs_asserted &= !1;
             }
         }
 
@@ -555,17 +554,18 @@ where
 
         // deassert the chip select pin
         let mut value_cs_deasserted: u8 = lock.value | self.cs_mask();
+
+        // drive pin 0, the clock pin according to the CPOL setting
+        // Reference: https://github.com/ftdi-rs/ftdi-embedded-hal/pull/69
         match self.pol.clk {
-            ClockData::MsbNegIn => {
+            ClockData::MsbNegIn | ClockData::LsbNegIn => {
                 value_cs_deasserted |= 1;
             }
-            ClockData::MsbPosIn => {
-                value_cs_deasserted &= !(1);
-            }
-            _ => {
-                unimplemented!()
+            ClockData::MsbPosIn | ClockData::LsbPosIn => {
+                value_cs_deasserted &= !1;
             }
         }
+
         lock.ft.send(
             MpsseCmdBuilder::new()
                 .set_gpio_lower(value_cs_deasserted, direction)
