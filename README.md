@@ -24,7 +24,7 @@ FTDI device into the [embedded-hal] traits.
 
 ```toml
 [dependencies.ftdi-embedded-hal]
-version = "0.23.1"
+version = "0.23.2"
 features = ["libftd2xx", "libftd2xx-static"]
 ```
 
