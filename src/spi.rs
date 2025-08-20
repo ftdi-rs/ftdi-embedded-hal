@@ -429,6 +429,8 @@ where
             lock.direction &= !(0x07 | cs_mask);
             // set SCK (AD0) and MOSI (AD1), and CS as output pins
             lock.direction |= 0x03 | cs_mask;
+            // deassert CS
+            lock.value |= cs_mask;
 
             // set GPIO pins to new state
             let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
