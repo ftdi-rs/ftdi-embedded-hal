@@ -118,14 +118,28 @@ where
     /// let device = libftd2xx::Ft2232h::with_description("Dual RS232-HS A")?;
     /// let hal = hal::FtHal::init_freq(device, 3_000_000)?;
     /// let mut spi = hal.spi()?;
-    /// spi.set_clock_polarity(Polarity::IdleLow);
+    /// spi.set_clock_polarity(Polarity::IdleLow)?;
     /// # }
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
     ///
     /// [SPI mode]: https://en.wikipedia.org/wiki/Serial_Peripheral_Interface#Mode_numbers
-    pub fn set_clock_polarity<P: Into<Polarity>>(&mut self, cpol: P) {
-        self.pol = cpol.into()
+    pub fn set_clock_polarity<P: Into<Polarity>>(&mut self, cpol: P) -> Result<(), Error<E>> {
+        self.pol = cpol.into();
+        let mut lock = self.mtx.lock().unwrap();
+        match self.pol.clk {
+            ClockData::MsbNegIn | ClockData::LsbNegIn => {
+                lock.lower.value |= 1;
+            }
+            ClockData::MsbPosIn | ClockData::LsbPosIn => {
+                lock.lower.value &= !1;
+            }
+        }
+        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+            .set_gpio_lower(lock.value, lock.direction)
+            .send_immediate();
+        lock.ft.send(cmd.as_slice())?;
+        Ok(())
     }
 }
 
@@ -465,14 +479,28 @@ where
     /// let device = libftd2xx::Ft2232h::with_description("Dual RS232-HS A")?;
     /// let hal = hal::FtHal::init_freq(device, 3_000_000)?;
     /// let mut spi = hal.spi_device(3)?;
-    /// spi.set_clock_polarity(Polarity::IdleLow);
+    /// spi.set_clock_polarity(Polarity::IdleLow)?;
     /// # }
     /// # Ok::<(), std::boxed::Box<dyn std::error::Error>>(())
     /// ```
     ///
     /// [SPI mode]: https://en.wikipedia.org/wiki/Serial_Peripheral_Interface#Mode_numbers
-    pub fn set_clock_polarity<P: Into<Polarity>>(&mut self, cpol: P) {
-        self.pol = cpol.into()
+    pub fn set_clock_polarity<P: Into<Polarity>>(&mut self, cpol: P) -> Result<(), Error<E>> {
+        self.pol = cpol.into();
+        let mut lock = self.mtx.lock().unwrap();
+        match self.pol.clk {
+            ClockData::MsbNegIn | ClockData::LsbNegIn => {
+                lock.lower.value |= 1;
+            }
+            ClockData::MsbPosIn | ClockData::LsbPosIn => {
+                lock.lower.value &= !1;
+            }
+        }
+        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+            .set_gpio_lower(lock.value, lock.direction)
+            .send_immediate();
+        lock.ft.send(cmd.as_slice())?;
+        Ok(())
     }
 }
 
