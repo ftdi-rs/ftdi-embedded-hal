@@ -4,9 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.24.0] - 2026-01-03
 ### Changed
-- Chip select is deasserted on SPI bus initialization.
+- Chip select is deasserted on SPI bus initialization by [@michaelwu] in [#74].
+
+### Fixed
+- Fix `SpiBus` for use with `Polarity::IdleHigh` by [@andreasWallner] in [#76].
+
+[@michaelwu]: https://github.com/michaelwu
+[@andreasWallner]: https://github.com/andreasWallner
+[#74]: https://github.com/ftdi-rs/ftdi-embedded-hal/pull/74
+[#76]: https://github.com/ftdi-rs/ftdi-embedded-hal/pull/76
 
 ## [0.23.2] - 2025-06-01
 ### Fixed
@@ -202,7 +210,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2020-09-12
 - Initial release
 
-[Unreleased]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.23.2...HEAD
+[Unreleased]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.24.0...HEAD
+[0.24.0]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.23.2...v0.24.0
 [0.23.2]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.23.1...v0.23.2
 [0.23.1]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.23.0...v0.23.1
 [0.23.0]: https://github.com/ftdi-rs/ftdi-embedded-hal/compare/v0.22.1...v0.23.0
