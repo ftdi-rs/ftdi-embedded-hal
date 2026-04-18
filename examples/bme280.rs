@@ -12,15 +12,17 @@ use eh1::i2c::I2c;
 use ftdi_embedded_hal as hal;
 
 fn main() {
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "ftdi")] {
+    cfg_select! {
+        feature = "ftdi" => {
             let device = ftdi::find_by_vid_pid(0x0403, 0x6014)
             .interface(ftdi::Interface::A)
             .open()
             .unwrap();
-        } else if #[cfg(feature = "libftd2xx")] {
+        }
+        feature = "libftd2xx" => {
             let device: libftd2xx::Ft232h = libftd2xx::Ftdi::new().unwrap().try_into().unwrap();
-        } else {
+        }
+        _ => {
             compile_error!("one of features 'ftdi' and 'libftd2xx' shall be enabled");
         }
     }
