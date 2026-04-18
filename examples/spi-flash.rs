@@ -7,17 +7,19 @@ use std::time::Duration;
 const LINE: u32 = 0x10;
 
 fn main() {
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "ftdi")] {
+    cfg_select! {
+        feature = "ftdi" => {
             let device = ftdi::find_by_vid_pid(0x0403, 0x6014)
                 .interface(ftdi::Interface::A)
                 .open()
                 .unwrap();
             let data: [u8; 8] = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
-        } else if #[cfg(feature = "libftd2xx")] {
+        }
+        feature = "libftd2xx" => {
             let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
             let data: [u8; 8] = [0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70];
-        } else {
+        }
+        _ => {
             compile_error!("one of features 'ftdi' and 'libftd2xx' shall be enabled");
         }
     }

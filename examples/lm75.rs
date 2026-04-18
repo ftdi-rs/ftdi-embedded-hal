@@ -4,15 +4,17 @@ use std::thread::sleep;
 use std::time::Duration;
 
 fn main() {
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "ftdi")] {
+    cfg_select! {
+        feature = "ftdi" => {
             let device = ftdi::find_by_vid_pid(0x0403, 0x6014)
-            .interface(ftdi::Interface::A)
-            .open()
-            .unwrap();
-        } else if #[cfg(feature = "libftd2xx")] {
+                .interface(ftdi::Interface::A)
+                .open()
+                .unwrap();
+        }
+        feature = "libftd2xx" => {
             let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
-        } else {
+        }
+        _ => {
             compile_error!("one of features 'ftdi' and 'libftd2xx' shall be enabled");
         }
     }
