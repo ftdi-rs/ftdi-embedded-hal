@@ -9,9 +9,9 @@ fn main() {
     cfg_select! {
         feature = "ftdi" => {
             let device = ftdi::find_by_vid_pid(0x0403, 0x6014)
-            .interface(ftdi::Interface::A)
-            .open()
-            .unwrap();
+                .interface(ftdi::Interface::A)
+                .open()
+                .unwrap();
         }
         feature = "libftd2xx" => {
             let device: libftd2xx::Ft232h = libftd2xx::Ftdi::new().unwrap().try_into().unwrap();
