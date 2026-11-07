@@ -97,8 +97,9 @@ where
 
     /// Enable faster I2C transactions by sending commands in a single write.
     ///
-    /// This is disabled by default, and currently has no effect when using
-    /// version 1 of the `embedded-hal` traits.
+    /// This is disabled by default, and currently has no effect when
+    /// using I2C transactions more complex than a simple write, or
+    /// read, or write-then-read.
     ///
     /// Normally the I2C methods will send commands with a delay after each
     /// slave ACK to read from the USB device.
@@ -635,6 +636,24 @@ where
         address: u8,
         operations: &mut [Operation<'_>],
     ) -> Result<(), Error<E>> {
+        // optimise the common cases of writing/reading a register
+        if self.fast {
+            match operations {
+                [Operation::Write(wbuf)] if !wbuf.is_empty() => {
+                    return self.write_fast(address, wbuf);
+                }
+                [Operation::Read(rbuf)] if !rbuf.is_empty() => {
+                    return self.read_fast(address, rbuf);
+                }
+                [Operation::Write(wbuf), Operation::Read(rbuf)]
+                    if !wbuf.is_empty() && !rbuf.is_empty() =>
+                {
+                    return self.write_read_fast(address, wbuf, rbuf);
+                }
+                _ => {}
+            }
+        }
+
         // lock at the start to prevent GPIO from being modified while we build
         // the MPSSE command
         let mut lock = self.mtx.lock().expect("Failed to aquire FTDI mutex");
