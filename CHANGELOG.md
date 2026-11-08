@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Allow an `InputPin` or `OutputPin` to be `Drop`ped, enabling it to be re-opened as the other type (e.g. to tristate a formerly-output pin).
+
 ## [0.24.0] - 2026-01-03
 ### Changed
 - Chip select is deasserted on SPI bus initialization by [@michaelwu] in [#74].

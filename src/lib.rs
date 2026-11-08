@@ -260,6 +260,17 @@ impl<Device: MpsseCmdExecutor> FtInner<Device> {
             byte.pins[usize::from(idx)] = Some(purpose)
         }
     }
+
+    /// De-allocate a pin, allowing it to be re-allocated later
+    pub fn deallocate_pin(&mut self, pin: Pin) {
+        let (byte, idx) = match pin {
+            Pin::Lower(idx) => (&mut self.lower, idx),
+            Pin::Upper(idx) => (&mut self.upper, idx),
+        };
+        assert!(idx < 8, "Pin index {idx} is out of range 0 - 7");
+
+        byte.pins[usize::from(idx)] = None;
+    }
 }
 
 impl<Device: MpsseCmdExecutor> From<Device> for FtInner<Device> {
