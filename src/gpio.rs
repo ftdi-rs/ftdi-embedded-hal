@@ -92,6 +92,13 @@ impl<Device: MpsseCmdExecutor> OutputPin<Device> {
     }
 }
 
+impl<Device: MpsseCmdExecutor> Drop for OutputPin<Device> {
+    fn drop(&mut self) {
+        let mut lock = self.mtx.lock().expect("Failed to acquire FTDI mutex");
+        lock.deallocate_pin(self.pin);
+    }
+}
+
 impl<Device, E> eh1::digital::ErrorType for OutputPin<Device>
 where
     Device: MpsseCmdExecutor<Error = E>,
@@ -203,6 +210,13 @@ impl<Device: MpsseCmdExecutor> InputPin<Device> {
             Pin::Upper(idx) => idx,
         };
         1 << idx
+    }
+}
+
+impl<Device: MpsseCmdExecutor> Drop for InputPin<Device> {
+    fn drop(&mut self) {
+        let mut lock = self.mtx.lock().expect("Failed to acquire FTDI mutex");
+        lock.deallocate_pin(self.pin);
     }
 }
 
